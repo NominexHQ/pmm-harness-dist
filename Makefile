@@ -33,7 +33,7 @@ help:
 	@echo "  make help           Show this help text"
 
 build: build-harness bump-marketplace-version
-	@echo "Completed pmm-dist build with $(VERSION_BUMP) marketplace version bump."
+	@echo "Completed pmm-harness-dist build with $(VERSION_BUMP) marketplace version bump."
 
 build-harness:
 	@$(MAKE) -C "$(HARNESS_DIR)" build-opencode build-claudecode
