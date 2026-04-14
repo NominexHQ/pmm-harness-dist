@@ -1,16 +1,34 @@
-## Dump Workflow
+# Dump Workflow
 
-When you receive a DUMP instruction from `pmm_dump`, you MUST:
+When you receive a DUMP instruction from `pmm_dump`, you MUST execute the workflow directly in the main context (no subagent dispatch).
 
-1. **Interpret depth level** — Use the provided `level` (`status`, `summary`, or `detailed`).
-2. **Generate Heatmap** (All levels):
-   - For each active file: `git log -1 --format="%ar|%at" -- memory/<file>`
-   - Map timestamps to ASCII blocks: `████` (<5m), `███░` (<30m), `██░░` (<2h), `█░░░` (<24h), `░░░░` (>24h).
-3. **Token Burn Estimate** (All levels) — Single-line compact estimate of read/write/total tokens per save.
-4. **Clusters + Timeline** (Summary and Detailed only):
-   - Parse clusters from `vectors.md`.
-   - Show last 5 entries from `timeline.md`.
-5. **Graph Map + Similarity Matrix** (Detailed only):
-   - Parse `graph.md` for ASCII node/edge representation.
-   - Parse `vectors.md` for similarity matrix (sparse ASCII table).
-6. **Output format** — Return the ASCII visualization directly without preamble.
+1. **Interpret depth level** — Use `instruction.level` (`status`, `summary`, or `detailed`), defaulting to `status` if missing.
+2. **Render Heatmap** (all levels):
+   - Start from `instruction.activeFiles` when present; otherwise parse active files from `memory/config.md`.
+   - For each active file, check recency with:
+     - `git log -1 --format="%ar|%at" -- memory/<file>`
+   - Map timestamps to ASCII heat levels:
+     - `████` = modified < 5 minutes ago
+     - `███░` = modified < 30 minutes ago
+     - `██░░` = modified < 2 hours ago
+     - `█░░░` = modified < 24 hours ago
+     - `░░░░` = modified > 24 hours ago or never
+   - Sort by recency, most recent first.
+3. **Token Burn Estimate** (all levels):
+   - Compute read estimate from total characters across `memory/*.md` (chars / 4).
+   - Compute write estimate from the latest memory diff (`git diff HEAD~1 --stat -- memory/`), scaled per contract.
+   - Output one compact line with read/write/total token estimates.
+4. **Summary extras** (`summary` and `detailed` only):
+   - Parse cluster rows from `memory/vectors.md`.
+   - Show cluster names and member counts.
+   - Show the last 5 timeline entries from `memory/timeline.md`.
+5. **Detailed extras** (`detailed` only):
+   - Parse relationships from `memory/graph.md` and render grouped ASCII graph sections.
+   - Parse similarity rows from `memory/vectors.md` and render a sparse ASCII similarity matrix.
+6. **Output format** — Return the final ASCII visualization directly with no preamble or trailing explanation.
+
+## Notes
+
+- This command is read-only and should not modify files.
+- Git read commands are allowed for timestamps and diff statistics.
+- If optional inputs are missing, degrade gracefully and still produce a compact visualization.
