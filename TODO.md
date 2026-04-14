@@ -38,10 +38,10 @@ Also present (Claude-only extras):
 
 ### Not implemented in OpenCode (but listed in README mapping)
 
-- [ ] `pmm_query`
-- [ ] `pmm_status`
-- [ ] `pmm_settings`
-- [ ] `pmm_update`
+- [x] `pmm_query`
+- [x] `pmm_status`
+- [x] `pmm_settings`
+- [x] `pmm_update`
 - [ ] `pmm_dump`
 - [ ] `pmm_viz`
 
@@ -62,9 +62,19 @@ Also present (Claude-only extras):
 
 ## Suggested implementation order (OpenCode)
 
-1. `pmm_query` (highest day-to-day value)
-2. `pmm_status`
-3. `pmm_settings`
-4. `pmm_update`
-5. `pmm_dump`
-6. `pmm_viz`
+1. `pmm_update`
+2. `pmm_dump`
+3. `pmm_viz`
+
+## Recent completion notes
+
+- `pmm_query` implemented in OpenCode with instruction-driven query workflow.
+- `pmm_status` implemented in OpenCode with instruction-driven status workflow.
+- `pmm_settings` implemented in OpenCode with a Claude-style current-settings summary and tabbed settings dialog.
+- Settings flow now uses dedicated `settings-questions.json` tabs and preserves `Default` / `Recommended` guidance in option descriptions.
+- Status contract now requires an all-memory activity-sorted heatmap table with session-recency buckets:
+  - modified this session
+  - modified 1-3 sessions ago
+  - modified 4-5 sessions ago
+  - stale older than 5 sessions
+- `pmm_update` implemented in OpenCode with `action: "check" | "apply"` parameter (default `"check"`). Check phase fetches, diffs, presents report, asks confirmation via `question` tool, then calls apply. Apply phase resolves upstream ref and writes files. Canonical update source is the deployed `pmm-harness-dist` git clone's own remote (not an external clone). Contract mirrors the Claude Code four-phase model.

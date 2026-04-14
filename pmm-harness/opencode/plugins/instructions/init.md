@@ -33,9 +33,16 @@ You MUST act as a single orchestrator using one of these modes:
    - `hydrate.md`
    - `save.md`
    - `recall.md`
+   - `query.md`
+   - `status.md`
+   - `dump.md`
+   - `settings.md`
+   - `update.md`
+   - `viz.md`
    - `system-tweaks.md`
    - `init-questions.json`
    - `hydrate-questions.json`
+   - `settings-questions.json`
    - `template-agent.md`
    - `template-claude.md`
 3. **Update Root Runtime Files:** For project-root `AGENT.md` and `CLAUDE.md`, refresh the managed system section.

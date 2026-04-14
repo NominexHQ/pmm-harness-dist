@@ -63,6 +63,21 @@ interface QuestionsConfig {
   questions: Array<Record<string, unknown>>;
 }
 
+interface SettingsSummary {
+  saveCadence: string;
+  commitBehaviour: string;
+  slidingWindow: string;
+  verbosity: string;
+  maintainModel: string;
+  readonlyModel: string;
+  maintainStrategy: string;
+  sessionStart: string;
+  recallBeyondWindow: string;
+  activeFiles: string[];
+  deactivatedFiles: string[];
+  loadStrategies: Record<string, string>;
+}
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -154,6 +169,105 @@ function parseActiveFiles(configContent: string): string[] {
   }
   
   return [...new Set(activeFiles)];
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getConfigSection(configContent: string, sectionName: string): string {
+  const match = configContent.match(
+    new RegExp(`##\\s+${escapeRegExp(sectionName)}\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)`, "i")
+  );
+
+  return match?.[1] ?? "";
+}
+
+function extractConfigValue(configContent: string, sectionName: string, key: string): string {
+  const section = getConfigSection(configContent, sectionName);
+  const match = section.match(new RegExp(`-\\s+${escapeRegExp(key)}:\\s*(.+)`, "i"));
+  return match?.[1]?.trim() ?? "not-configured";
+}
+
+function formatSlidingWindowSummary(configContent: string): string {
+  const timelineMax = extractConfigValue(configContent, "Sliding Window Size", "Timeline max");
+  const summariesMax = extractConfigValue(configContent, "Sliding Window Size", "Summaries max");
+  const combined = `${timelineMax}/${summariesMax}`;
+
+  if (combined === "30/5") return "light (30/5)";
+  if (combined === "50/10") return "moderate (50/10)";
+  if (combined === "100/20") return "heavy (100/20)";
+  if (combined.toLowerCase() === "unlimited/unlimited") return "unlimited";
+
+  return combined;
+}
+
+function parseLoadStrategies(configContent: string): Record<string, string> {
+  const strategies: Record<string, string> = {};
+  const section = getConfigSection(configContent, "Active Files");
+
+  for (const line of section.split("\n")) {
+    const match = line.match(/^\s*-\s*([\w\-.]+\.md):\s*active(?:\s*\|\s*([^\n]+))?/i);
+    if (match) {
+      strategies[match[1]] = (match[2] ?? "full").trim();
+    }
+  }
+
+  return strategies;
+}
+
+function parseSettingsSummary(configContent: string): SettingsSummary {
+  const activeFiles = parseActiveFiles(configContent);
+  const knownFiles = [
+    "memory.md",
+    "assets.md",
+    "decisions.md",
+    "processes.md",
+    "preferences.md",
+    "voices.md",
+    "lessons.md",
+    "timeline.md",
+    "summaries.md",
+    "progress.md",
+    "progress-archive.md",
+    "last.md",
+    "graph.md",
+    "vectors.md",
+    "taxonomies.md",
+    "standinginstructions.md",
+    "last-parallel.md",
+    "timeline-parallel.md"
+  ];
+
+  return {
+    saveCadence: extractConfigValue(configContent, "Save Cadence", "Mode"),
+    commitBehaviour: extractConfigValue(configContent, "Commit Behaviour", "Mode"),
+    slidingWindow: formatSlidingWindowSummary(configContent),
+    verbosity: extractConfigValue(configContent, "Verbosity", "Mode"),
+    maintainModel: extractConfigValue(configContent, "Maintain Agent Model", "Model"),
+    readonlyModel: extractConfigValue(configContent, "Readonly Agent Model", "Model"),
+    maintainStrategy: extractConfigValue(configContent, "Maintain Strategy", "Strategy"),
+    sessionStart: extractConfigValue(configContent, "Session Start", "Mode"),
+    recallBeyondWindow: extractConfigValue(configContent, "Recall Beyond Window", "Mode"),
+    activeFiles,
+    deactivatedFiles: knownFiles.filter((file) => !activeFiles.includes(file)),
+    loadStrategies: parseLoadStrategies(configContent)
+  };
+}
+
+function readLocalVersion(root: string): string {
+  const versionPath = join(root, "pmm", "version.json");
+
+  if (!existsSync(versionPath)) {
+    return "0.0.0";
+  }
+
+  try {
+    const parsed = JSON.parse(readFileSync(versionPath, "utf-8"));
+    return typeof parsed?.version === "string" ? parsed.version : "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
 }
 
 function parseTemplates(templatesContent: string): Record<string, TemplateDefinition> {
@@ -262,6 +376,16 @@ function validateGit(worktree: string): GitStatus {
   }
 }
 
+function getGitTopLevel(worktree: string): string | null {
+  try {
+    return execSync("git rev-parse --show-toplevel", { cwd: worktree, stdio: "pipe" })
+      .toString()
+      .trim();
+  } catch {
+    return null;
+  }
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -333,6 +457,97 @@ const DEFAULT_HYDRATE_QUESTIONS: QuestionsConfig = {
   ]
 };
 
+const DEFAULT_SETTINGS_QUESTIONS: QuestionsConfig = {
+  "questions": [
+    {
+      "header": "Save",
+      "question": "Choose save cadence and commit behaviour. Keep the default path unless you need a different operational profile.",
+      "options": [
+        { "label": "Save: Every Milestone", "description": "Default and recommended. Update at decisions, milestones, and session breaks." },
+        { "label": "Save: Every 5 Messages", "description": "More frequent updates with higher token cost." },
+        { "label": "Save: On Request Only", "description": "Only save when explicitly asked." },
+        { "label": "Commit: Auto-commit", "description": "Default and recommended. Commit every update batch automatically." },
+        { "label": "Commit: Session End", "description": "Batch commits at session end." },
+        { "label": "Commit: Manual", "description": "Do not commit automatically." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Models",
+      "question": "Choose models and dispatch strategy for maintain and read-only PMM work.",
+      "options": [
+        { "label": "Maintain Model: Haiku", "description": "Default and recommended. Fast and cheap for mechanical edits." },
+        { "label": "Maintain Model: Sonnet", "description": "Balanced option for more nuanced updates." },
+        { "label": "Maintain Model: Opus", "description": "Most capable, highest cost." },
+        { "label": "Readonly Model: Haiku", "description": "Default and recommended for query, recall, status, dump, and viz." },
+        { "label": "Readonly Model: Sonnet", "description": "Better synthesis for read-heavy flows." },
+        { "label": "Readonly Model: Opus", "description": "Highest cost for read-only tasks." },
+        { "label": "Strategy: Single", "description": "Default and recommended. Lowest dispatch overhead." },
+        { "label": "Strategy: Tiered", "description": "Higher parallelism for larger installs; more expensive." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Session",
+      "question": "Configure startup loading, recall behavior, and timeline/summary window sizing.",
+      "options": [
+        { "label": "Session Start: Lazy", "description": "Default and recommended. Avoid extra startup dispatch when memory is already injected." },
+        { "label": "Session Start: Eager", "description": "Always dispatch a startup read." },
+        { "label": "Recall Beyond Window: Prompt", "description": "Default and recommended. Ask before searching git history." },
+        { "label": "Recall Beyond Window: Auto", "description": "Silently search git history when needed." },
+        { "label": "Window: Light (30/5)", "description": "Smaller session-start footprint." },
+        { "label": "Window: Moderate (50/10)", "description": "Default and recommended balance." },
+        { "label": "Window: Heavy (100/20)", "description": "Load more recent history on startup." },
+        { "label": "Window: Unlimited", "description": "Load full windowed files on startup." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Display",
+      "question": "Choose how visible PMM update reporting should be.",
+      "options": [
+        { "label": "Verbosity: Silent", "description": "Only minimal status feedback." },
+        { "label": "Verbosity: Summary", "description": "Default and recommended. One-line confirmations." },
+        { "label": "Verbosity: Verbose", "description": "Full detail for each operation." }
+      ]
+    },
+    {
+      "header": "Files",
+      "question": "Select which PMM files stay active. Core files are usually the best default set.",
+      "options": [
+        { "label": "memory.md", "description": "Recommended core facts file." },
+        { "label": "assets.md", "description": "Artifacts and assets." },
+        { "label": "decisions.md", "description": "Recommended decision log." },
+        { "label": "processes.md", "description": "Processes and workflows." },
+        { "label": "preferences.md", "description": "Preferences and operating conventions." },
+        { "label": "voices.md", "description": "Voice and messaging guidance." },
+        { "label": "lessons.md", "description": "Recommended lessons learned file." },
+        { "label": "timeline.md", "description": "Recommended chronology; usually best with a tail strategy." },
+        { "label": "summaries.md", "description": "Rolling summary file." },
+        { "label": "progress.md", "description": "Recommended current state and blockers." },
+        { "label": "progress-archive.md", "description": "Archived progress history." },
+        { "label": "last.md", "description": "Recommended handoff file." },
+        { "label": "graph.md", "description": "Tier 2 relationship map." },
+        { "label": "vectors.md", "description": "Tier 2 semantic map." },
+        { "label": "taxonomies.md", "description": "Tier 2 classification map." },
+        { "label": "standinginstructions.md", "description": "Recommended standing rules and guardrails." },
+        { "label": "last-parallel.md", "description": "Parallel-session handoff file." },
+        { "label": "timeline-parallel.md", "description": "Parallel-session chronology." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Load Strategy",
+      "question": "Choose how load strategies should be handled for active Tier 1 files. Use manual mode only when you want per-file overrides.",
+      "options": [
+        { "label": "Keep Current Strategies", "description": "Default. Preserve existing config.md strategies." },
+        { "label": "Use Recommended Strategies", "description": "Recommended. timeline=tail:5, decisions=tail:10, lessons=tail:5, others=full." },
+        { "label": "Configure Manually", "description": "Follow up with per-file values such as full, tail:N, header, or skip." }
+      ]
+    }
+  ]
+};
+
 // ============================================================================
 // PLUGIN EXPORT
 // ============================================================================
@@ -347,11 +562,18 @@ export const NominexPMMPlugin: Plugin = async ({ client, worktree: pluginWorktre
       const systemInstructions = loadInstruction(root, "system", "");
       const initQuestions = loadQuestionsConfig(root, "init-questions", DEFAULT_INIT_QUESTIONS);
       const hydrateQuestions = loadQuestionsConfig(root, "hydrate-questions", DEFAULT_HYDRATE_QUESTIONS);
+      const settingsQuestions = loadQuestionsConfig(root, "settings-questions", DEFAULT_SETTINGS_QUESTIONS);
       const memoryTemplatesMarkdown = loadInstruction(root, "memory-templates", DEFAULT_MEMORY_TEMPLATES_MARKDOWN);
       const initInstructions = loadInstruction(root, "init", "");
       const hydrateInstructions = loadInstruction(root, "hydrate", "");
       const saveInstructions = loadInstruction(root, "save", "");
       const recallInstructions = loadInstruction(root, "recall", "");
+      const queryInstructions = loadInstruction(root, "query", "");
+      const statusInstructions = loadInstruction(root, "status", "");
+      const dumpInstructions = loadInstruction(root, "dump", "");
+      const settingsInstructions = loadInstruction(root, "settings", "");
+      const updateInstructions = loadInstruction(root, "update", "");
+      const vizInstructions = loadInstruction(root, "viz", "");
       const systemTweaksInstructions = loadInstruction(root, "system-tweaks", "");
 
       const instructions = `
@@ -365,6 +587,11 @@ ${JSON.stringify(initQuestions, null, 2)}
 [HYDRATE_QUESTIONS]
 \`\`\`json
 ${JSON.stringify(hydrateQuestions, null, 2)}
+\`\`\`
+
+[SETTINGS_QUESTIONS]
+\`\`\`json
+${JSON.stringify(settingsQuestions, null, 2)}
 \`\`\`
 
 [MEMORY_TEMPLATES_PATH_DEFAULT]
@@ -386,6 +613,24 @@ ${saveInstructions}
 
 [PMM_RECALL_WORKFLOW_INSTRUCTIONS]
 ${recallInstructions}
+
+[PMM_QUERY_WORKFLOW_INSTRUCTIONS]
+${queryInstructions}
+
+[PMM_STATUS_WORKFLOW_INSTRUCTIONS]
+${statusInstructions}
+
+[PMM_DUMP_WORKFLOW_INSTRUCTIONS]
+${dumpInstructions}
+
+[PMM_SETTINGS_WORKFLOW_INSTRUCTIONS]
+${settingsInstructions}
+
+[PMM_UPDATE_WORKFLOW_INSTRUCTIONS]
+${updateInstructions}
+
+[PMM_VIZ_WORKFLOW_INSTRUCTIONS]
+${vizInstructions}
 
 [PMM_SYSTEM_TWEAKS_INSTRUCTIONS]
 ${systemTweaksInstructions}
@@ -495,6 +740,182 @@ ${systemTweaksInstructions}
               type: 'RECALL',
               topic: args.topic,
               activeFiles
+            }
+          });
+        }
+      }),
+
+      pmm_query: tool({
+        description: "Queries PMM memory for a question and returns structured query instructions for the active memory files.",
+        args: {
+          question: z.string().describe("Natural language query to run across PMM memory."),
+          deep: z.boolean().optional().describe("Whether to expand retrieval to related concepts if supported."),
+          dump: z.boolean().optional().describe("Whether to return structured verbatim results instead of prose synthesis.")
+        },
+        execute: async (args, context: ToolContext) => {
+          const root = getRoot(context, pluginWorktree);
+          const memoryDir = join(root, "memory");
+
+          if (!existsSync(memoryDir)) {
+            return JSON.stringify({
+              status: "ERROR",
+              message: "PMM not initialized. Run pmm_init first."
+            });
+          }
+
+          let activeFiles: string[] = [];
+          const configPath = join(memoryDir, "config.md");
+          if (existsSync(configPath)) {
+            try {
+              activeFiles = parseActiveFiles(readFileSync(configPath, "utf-8"));
+            } catch (e) {}
+          }
+
+          return JSON.stringify({
+            status: "INSTRUCTION_READY",
+            instruction: {
+              type: "QUERY",
+              question: args.question,
+              deep: args.deep ?? false,
+              dump: args.dump ?? false,
+              activeFiles
+            }
+          });
+        }
+      }),
+
+      pmm_status: tool({
+        description: "Returns PMM health dashboard including initialization state, activity, and file health.",
+        args: {},
+        execute: async (args, context: ToolContext) => {
+          const root = getRoot(context, pluginWorktree);
+          const memoryDir = join(root, "memory");
+
+          if (!existsSync(memoryDir)) {
+            return JSON.stringify({
+              status: "ERROR",
+              message: "PMM not initialized. Run pmm_init first."
+            });
+          }
+
+          let activeFiles: string[] = [];
+          const configPath = join(memoryDir, "config.md");
+          if (existsSync(configPath)) {
+            try {
+              activeFiles = parseActiveFiles(readFileSync(configPath, "utf-8"));
+            } catch (e) {}
+          }
+
+          return JSON.stringify({
+            status: "INSTRUCTION_READY",
+            instruction: {
+              type: "STATUS",
+              activeFiles
+            }
+          });
+        }
+      }),
+
+      pmm_dump: tool({
+        description: "Returns ASCII visualization of PMM memory state.",
+        args: {
+          level: z.enum(["status", "summary", "detailed"]).optional().describe("Depth level of the dump.")
+        },
+        execute: async (args, context: ToolContext) => {
+          const root = getRoot(context, pluginWorktree);
+          const memoryDir = join(root, "memory");
+
+          if (!existsSync(memoryDir)) {
+            return JSON.stringify({
+              status: "ERROR",
+              message: "PMM not initialized. Run pmm_init first."
+            });
+          }
+
+          let activeFiles: string[] = [];
+          const configPath = join(memoryDir, "config.md");
+          if (existsSync(configPath)) {
+            try {
+              activeFiles = parseActiveFiles(readFileSync(configPath, "utf-8"));
+            } catch (e) {}
+          }
+
+          return JSON.stringify({
+            status: "INSTRUCTION_READY",
+            instruction: {
+              type: "DUMP",
+              level: args.level || "status",
+              activeFiles
+            }
+          });
+        }
+      }),
+
+      pmm_settings: tool({
+        description: "Reconfigures PMM settings via a Claude-style tabbed dialog and writes the updated config.",
+        args: {},
+        execute: async (args, context: ToolContext) => {
+          const root = getRoot(context, pluginWorktree);
+          const memoryDir = join(root, "memory");
+
+          if (!existsSync(memoryDir)) {
+            return JSON.stringify({
+              status: "ERROR",
+              message: "PMM not initialized. Run pmm_init first."
+            });
+          }
+
+          const configPath = join(memoryDir, "config.md");
+          const configContent = existsSync(configPath) ? readFileSync(configPath, "utf-8") : "";
+
+          return JSON.stringify({
+            status: "INSTRUCTION_READY",
+            instruction: {
+              type: "SETTINGS",
+              configPath,
+              currentSettings: configContent ? parseSettingsSummary(configContent) : null,
+              gitStatus: validateGit(root)
+            }
+          });
+        }
+      }),
+
+      pmm_update: tool({
+        description: "Checks for PMM system updates and optionally applies them. Defaults to 'check'. Call with action='apply' after user confirms.",
+        args: {
+          action: z.enum(["check", "apply"]).optional().describe("'check' (default) fetches and shows what would change. 'apply' applies the update — only call after user has confirmed from a prior check.")
+        },
+        execute: async (args, context: ToolContext) => {
+          const root = getRoot(context, pluginWorktree);
+          const gitRepoRoot = getGitTopLevel(root);
+
+          return JSON.stringify({
+            status: "INSTRUCTION_READY",
+            instruction: {
+              type: "UPDATE",
+              action: args.action ?? "check",
+              projectRoot: root,
+              gitRepoRoot: gitRepoRoot || root,
+              localVersion: readLocalVersion(root),
+              localVersionPath: join(root, "pmm", "version.json"),
+              memoryInitialized: existsSync(join(root, "memory")),
+              gitStatus: validateGit(root)
+            }
+          });
+        }
+      }),
+
+      pmm_viz: tool({
+        description: "Generates and opens an interactive D3.js memory graph visualization.",
+        args: {
+          scope: z.enum(["full", "graph", "clusters", "timeline"]).optional().describe("Scope of the visualization.")
+        },
+        execute: async (args, context: ToolContext) => {
+          return JSON.stringify({
+            status: "INSTRUCTION_READY",
+            instruction: {
+              type: "VIZ",
+              scope: args.scope || "full"
             }
           });
         }

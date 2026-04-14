@@ -90,3 +90,25 @@ Canonical development progress log for `pmm-harness-dist`.
 
 - Validated GitHub auth/account context across `raffi-ismail`, `leith-dev`, and `tessacodes`.
 - Investigated author attribution mismatch (`Mahni9`) and traced to noreply email/user ID mapping.
+
+### OpenCode status parity refinement
+
+- Updated OpenCode status workflow contract to require an activity-sorted heatmap table across all `memory/*.md` files.
+- Added explicit session-distance recency buckets for status output:
+  - modified this session
+  - modified 1-3 sessions ago
+  - modified 4-5 sessions ago
+  - stale older than 5 sessions
+- Standardized shaded activity scale for status rendering (`█`, `▓`, `▒`, `░`).
+- Synced the same status contract in both default instruction source and `memory/instructions` override source.
+- Rebuilt harness OpenCode distribution so packaged status instructions reflect the updated contract.
+
+### OpenCode settings parity refinement
+
+- Implemented `pmm_settings` in the OpenCode plugin using the same high-level Claude pattern: current-settings summary first, then a tabbed settings wizard.
+- Added a dedicated `settings-questions.json` schema for OpenCode so settings changes use structured tabs instead of a loose prose exchange.
+- Added default and recommended guidance directly in settings option descriptions.
+- Extended `pmm_settings` tool payload to include parsed current settings plus git availability, allowing prompts to be prefilled from `memory/config.md`.
+- Synced settings workflow and settings question schema into `memory/instructions` override paths.
+- Fixed override routing drift by bringing `memory/instructions/system.md` up to parity with the newer query/status/settings/update/viz workflow sections.
+- Rebuilt harness OpenCode distribution so packaged settings instructions and question schema reflect the updated Claude-style flow.
