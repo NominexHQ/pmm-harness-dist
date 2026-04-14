@@ -1,6 +1,6 @@
 # PMM Dual-Runtime Starter Repo
-## Poor Man's Memory (Programmable Memory Management)
 
+## Poor Man's Memory (Programmable Memory Management)
 
 Clone-and-go PMM runtime bundle for unified memory across OpenCode and Claude Code.
 
@@ -194,13 +194,13 @@ This matrix is the source of truth for runtime parity status.
 
 | Capability group | Claude Code | OpenCode |
 | --- | --- | --- |
-| Core PMM commands (`init/save/hydrate/recall/query/status/settings/update/dump/viz`) | Implemented | Implemented except `viz` |
+| Core PMM commands (`init/save/hydrate/recall/query/status/settings/update/dump/viz`) | Implemented | Implemented |
 | Runtime-specific diagnostics (`debug`) | Not available | `pmm_debug` implemented |
 | Claude extras (`onboard`, `init-local-skills`) | Implemented | Not available |
 
 ### Planned for OpenCode
 
-- `pmm_viz` (interactive visualization parity)
+- Runtime command parity complete.
 
 ### Claude-only extras
 
@@ -210,4 +210,3 @@ This matrix is the source of truth for runtime parity status.
 ## Developer notes
 
 Build/versioning workflow and release internals are documented in `DEVELOPMENT.md`.
-

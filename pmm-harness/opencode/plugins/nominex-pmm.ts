@@ -906,16 +906,31 @@ ${systemTweaksInstructions}
       }),
 
       pmm_viz: tool({
-        description: "Generates and opens an interactive D3.js memory graph visualization.",
+        description: "Generates and opens an interactive D3.js memory graph visualization with optional scope filtering.",
         args: {
-          scope: z.enum(["full", "graph", "clusters", "timeline"]).optional().describe("Scope of the visualization.")
+          scope: z.enum(["full", "graph", "clusters", "timeline"]).optional().describe("Visualization scope. Defaults to 'full'.")
         },
         execute: async (args, context: ToolContext) => {
+          const root = getRoot(context, pluginWorktree);
+          const memoryDir = join(root, "memory");
+
+          if (!existsSync(memoryDir)) {
+            return JSON.stringify({
+              status: "ERROR",
+              message: "PMM not initialized. Run pmm_init first."
+            });
+          }
+
           return JSON.stringify({
             status: "INSTRUCTION_READY",
             instruction: {
               type: "VIZ",
-              scope: args.scope || "full"
+              scope: args.scope || "full",
+              projectRoot: root,
+              memoryDir,
+              cachePath: join(root, "pmm", "viz-cache.html"),
+              templatePath: join(root, "pmm", "pmm-viz-template.html"),
+              d3Path: join(root, "pmm", "d3.v7.min.js")
             }
           });
         }

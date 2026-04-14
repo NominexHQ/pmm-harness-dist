@@ -39,6 +39,7 @@ Also present (Claude-only extras):
 - `pmm_settings`
 - `pmm_update`
 - `pmm_dump`
+- `pmm_viz`
 - `pmm_debug`
 
 ### Not implemented in OpenCode (but listed in README mapping)
@@ -48,7 +49,7 @@ Also present (Claude-only extras):
 - [x] `pmm_settings`
 - [x] `pmm_update`
 - [x] `pmm_dump`
-- [ ] `pmm_viz`
+- [x] `pmm_viz`
 
 ## Documentation consistency tasks
 
@@ -67,7 +68,7 @@ Also present (Claude-only extras):
 
 ## Suggested implementation order (OpenCode)
 
-1. `pmm_viz`
+1. Runtime command parity complete.
 
 ## Recent completion notes
 
@@ -82,3 +83,4 @@ Also present (Claude-only extras):
   - stale older than 5 sessions
 - `pmm_update` implemented in OpenCode with `action: "check" | "apply"` parameter (default `"check"`). Check phase fetches, diffs, presents report, asks confirmation via `question` tool, then calls apply. Apply phase resolves upstream ref and writes files. Canonical update source is the deployed `pmm-harness-dist` git clone's own remote (not an external clone). Contract mirrors the Claude Code four-phase model.
 - `pmm_dump` contract aligned to Claude precedence model and adapted for OpenCode main-context execution (no subagent dispatch). Added override copy at `memory/instructions/dump.md` so user-owned instruction precedence remains authoritative over plugin defaults.
+- `pmm_viz` implemented in OpenCode with richer instruction payload (`projectRoot`, `memoryDir`, `cachePath`, `templatePath`, `d3Path`) and full workflow contract mirrored in `memory/instructions/viz.md` for precedence override behavior.
