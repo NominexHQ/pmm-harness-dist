@@ -165,13 +165,16 @@ This updates system/plugin assets while preserving your project memory files.
 - `pmm status` - diagnostics and health checks
 - `pmm settings` - configure PMM behavior
 - `pmm update` - update PMM system/plugin files
+- `pmm dump` - compact ASCII memory overview in terminal
+- `pmm viz` - interactive graph visualization
+- `pmm debug` - OpenCode environment diagnostics
 
-### Command mapping by runtime
+### Command mapping by runtime (implemented in both runtimes)
 
 Use this mapping when switching between Claude Code and OpenCode.
 
 | Capability | Claude Code | OpenCode |
-|---|---|---|
+| --- | --- | --- |
 | Initialize | `pmm:init` | `pmm_init` |
 | Save memory | `pmm:save` | `pmm_save` |
 | Hydrate memory | `pmm:hydrate` | `pmm_hydrate` |
@@ -182,6 +185,25 @@ Use this mapping when switching between Claude Code and OpenCode.
 | Update PMM | `pmm:update` | `pmm_update` |
 | Memory dump (text) | `pmm:dump` | `pmm_dump` |
 | Memory visualization | `pmm:viz` | `pmm_viz` |
+
+### Runtime support matrix
+
+This matrix is the source of truth for runtime parity status.
+
+| Capability group | Claude Code | OpenCode |
+| --- | --- | --- |
+| Core PMM commands (`init/save/hydrate/recall/query/status/settings/update/dump/viz`) | Implemented | Implemented except `viz` |
+| Runtime-specific diagnostics (`debug`) | Not available | `pmm_debug` implemented |
+| Claude extras (`onboard`, `init-local-skills`) | Implemented | Not available |
+
+### Planned for OpenCode
+
+- `pmm_viz` (interactive visualization parity)
+
+### Claude-only extras
+
+- `pmm:onboard`
+- `pmm:init-local-skills`
 
 ## Developer notes
 
