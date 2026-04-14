@@ -1,0 +1,20 @@
+{
+  "questions": [
+    {
+      "header": "Strategy",
+      "question": "How should new knowledge be integrated?",
+      "options": [
+        { "label": "Append", "description": "Add new knowledge to the end of existing files." },
+        { "label": "Merge", "description": "Incorporate new knowledge alongside existing entries." }
+      ]
+    },
+    {
+      "header": "Scope",
+      "question": "Which source should be used?",
+      "options": [
+        { "label": "Current Context", "description": "Analyze only current messages." },
+        { "label": "This Session", "description": "Analyze full transcript." }
+      ]
+    }
+  ]
+}

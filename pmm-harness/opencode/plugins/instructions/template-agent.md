@@ -1,0 +1,16 @@
+# AGENT.md
+
+## System (Managed by PMM)
+<!-- PMM_SYSTEM_START -->
+- Source of truth: `agents/memory-maintainer/memory-maintainer.md`
+- Runtime: OpenCode / generic agent runtime
+- Instruction precedence for PMM prompts:
+  1. `memory/instructions/` (override)
+  2. `.opencode/plugins/instructions/` (default)
+- Edit policy: this section is maintained by PMM update flows.
+<!-- PMM_SYSTEM_END -->
+
+## Custom Implementations (User)
+
+Add project-specific agent instructions here.
+This section is user-owned and must be preserved during PMM updates.

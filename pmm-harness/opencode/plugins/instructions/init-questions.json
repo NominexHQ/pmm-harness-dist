@@ -1,0 +1,45 @@
+{
+  "questions": [
+    {
+      "header": "Storage",
+      "question": "Configure PMM storage and commit behavior.",
+      "options": [
+        { "label": "Save: Every Milestone", "description": "Update memory at key events (default)." },
+        { "label": "Save: Every 5 Messages", "description": "Frequent automatic updates (not recommended - may result in high token usage)." },
+        { "label": "Commit: Auto-commit", "description": "Commit changes to git after every save (default)." },
+        { "label": "Commit: Manual", "description": "You decide when to commit (tell the LLM to pmm_save)." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Core Memory",
+      "question": "Which core memory files should be active?",
+      "options": [
+        { "label": "Essential", "description": "memory.md, decisions.md, progress.md, last.md, timeline.md (Recommended)." },
+        { "label": "Full Suite", "description": "All 12 core files (Standard)." },
+        { "label": "Custom", "description": "I will specify files later in config.md." }
+      ]
+    },
+    {
+      "header": "Project Knowledge",
+      "question": "How should PMM treat project knowledge?",
+      "options": [
+        { "label": "Visibility: Private", "description": "No PII restrictions, full fidelity (Recommended if no git tracking or repo is private)." },
+        { "label": "Visibility: Public", "description": "Avoid personal details, use handles." },
+        { "label": "Priority: PMM-first", "description": "PMM is the source of truth (Default)." },
+        { "label": "Priority: Coexist", "description": "PMM and OpenCode auto-memory operate independently." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Agent Personalization",
+      "question": "Configure the agents handling your memory. Only applicable if using you intend to run alongside Claude Code.",
+      "options": [
+        { "label": "Model: Haiku", "description": "Fast and cheap for maintenance (Default). Note: Model selection is a Claude Code-only feature; OpenCode uses the host model for all operations." },
+        { "label": "Context: Tiered", "description": "Load core files first, others on demand (Saves tokens, Recommended)." },
+        { "label": "Context: Full", "description": "Load all active files at session start." }
+      ],
+      "multiple": true
+    }
+  ]
+}
