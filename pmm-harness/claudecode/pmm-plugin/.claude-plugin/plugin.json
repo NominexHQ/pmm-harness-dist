@@ -1,0 +1,38 @@
+{
+  "name": "pmm",
+  "version": "2.7.0",
+  "description": "By Monday, you're re-explaining choices you made on Thursday. PMM fixes that. Every session, Claude loads what it already knows, then adds to it. Structured flat files, git-backed. No database, no setup. Decisions tracked with rationale, not just what but why. git log is your memory audit trail. Memory that compounds, not rots.",
+  "author": {
+    "name": "NominexHQ"
+  },
+  "repository": "https://github.com/NominexHQ/poor-man-memory",
+  "homepage": "https://github.com/NominexHQ/poor-man-memory",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "session-memory",
+    "git-backed",
+    "compounding",
+    "structured-memory",
+    "decisions",
+    "lessons",
+    "hooks",
+    "auto-save",
+    "multi-agent",
+    "open-source",
+    "no-infrastructure",
+    "knowledge-base",
+    "session-persistence",
+    "agent-memory",
+    "traceability",
+    "audit-trail",
+    "context-management",
+    "context-loss",
+    "persistent-context",
+    "context-rot",
+    "claude-code-memory",
+    "decision-log",
+    "claude-code-forgets",
+    "claude-memory-manager"
+  ]
+}
