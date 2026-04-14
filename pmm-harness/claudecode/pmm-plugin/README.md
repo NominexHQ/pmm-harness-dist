@@ -12,18 +12,18 @@ Markdown files, git-backed. No database, no setup. Decisions tracked with ration
 
 ## Install
 
-### Official marketplace
+### Private marketplace (local harness)
 
 ```bash
-claude plugin marketplace add anthropics/claude-plugins-official
-claude plugin install pmm@claude-plugins-official
+claude plugin marketplace add ./pmm-harness-dist
+claude plugin install pmm@nominex-pmm-harness-marketplace
 ```
 
-### Community mirror
+From any other directory, use the absolute path to `pmm-harness-dist`:
 
 ```bash
-claude plugin marketplace add anthropics/claude-plugins-community
-claude plugin install pmm@claude-community
+claude plugin marketplace add /absolute/path/to/pmm-harness-dist
+claude plugin install pmm@nominex-pmm-harness-marketplace
 ```
 
 ---
