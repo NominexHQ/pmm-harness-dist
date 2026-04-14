@@ -207,6 +207,11 @@ This matrix is the source of truth for runtime parity status.
 - `pmm:onboard`
 - `pmm:init-local-skills`
 
+## Known issues
+
+- **OpenCode slash-form invocation** — `/pmm_*` slash-form commands do not execute reliably in OpenCode. Workaround: invoke by typing the tool name directly, e.g. `pmm_viz`.
+- **Viz template: session list overflow** — the sessions panel in `pmm-viz-template.html` overflows its container height with no scroll. Workaround: resize the browser window. Fix pending (add `overflow-y: auto` to sessions container CSS).
+
 ## Developer notes
 
 Build/versioning workflow and release internals are documented in `DEVELOPMENT.md`.

@@ -66,6 +66,10 @@ Also present (Claude-only extras):
 - [ ] Track fix for slash-form invocation once root cause is resolved.
 - [ ] Remove workaround note only after verified fix in real OpenCode session.
 
+## Viz template known bugs
+
+- [ ] **Session list overflow** — the sessions panel in `pmm-viz-template.html` is taller than its container's vertical height with no scroll. Fix: add `overflow-y: auto` (or `scroll`) to the sessions list container CSS.
+
 ## Suggested implementation order (OpenCode)
 
 1. Runtime command parity complete.
