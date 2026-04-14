@@ -645,7 +645,13 @@ ${systemTweaksInstructions}
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
           const memoryDir = join(root, "memory");
-          return existsSync(memoryDir) ? "MANAGE" : "INSTALL";
+          const mode = existsSync(memoryDir) ? "MANAGE" : "INSTALL";
+          return JSON.stringify({
+            mode,
+            projectRoot: root,
+            assetsSourceDir: join(root, ".opencode", "plugins", "pmm"),
+            assetsTargetDir: join(root, "pmm")
+          });
         }
       }),
       
@@ -921,6 +927,10 @@ ${systemTweaksInstructions}
             });
           }
 
+          const _now = new Date();
+          const _pad = (n: number) => String(n).padStart(2, "0");
+          const _ts = `${_now.getFullYear()}-${_pad(_now.getMonth()+1)}-${_pad(_now.getDate())}-${_pad(_now.getHours())}${_pad(_now.getMinutes())}${_pad(_now.getSeconds())}`;
+
           return JSON.stringify({
             status: "INSTRUCTION_READY",
             instruction: {
@@ -928,7 +938,7 @@ ${systemTweaksInstructions}
               scope: args.scope || "full",
               projectRoot: root,
               memoryDir,
-              cachePath: join(root, "pmm", "viz-cache.html"),
+              cachePath: join(root, "pmm", `viz-${_ts}.html`),
               templatePath: join(root, "pmm", "pmm-viz-template.html"),
               d3Path: join(root, "pmm", "d3.v7.min.js")
             }

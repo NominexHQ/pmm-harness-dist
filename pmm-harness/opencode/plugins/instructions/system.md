@@ -1,7 +1,8 @@
 <nominex-memory>
 [PMM INIT WORKFLOW]
-- If 'pmm_init' returns 'INSTALL', you MUST guide the user through the initialization process using the 'question' tool with the following JSON. You MUST present all tabs and get the user's answers before proceeding. After the user confirms, you MUST follow the '[PMM_POST_INIT_INSTRUCTIONS]'.
-- If 'pmm_init' returns 'MANAGE', PMM is already initialized. You should acknowledge this and offer to manage settings, perform save/recall/hydrate, or run an instruction sync/update flow via '[PMM_POST_INIT_INSTRUCTIONS]'.
+- 'pmm_init' returns a JSON payload with a `mode` field (`"INSTALL"` or `"MANAGE"`), plus `projectRoot`, `assetsSourceDir`, and `assetsTargetDir`.
+- If `mode` is `'INSTALL'`, you MUST guide the user through the initialization process using the 'question' tool with the following JSON. You MUST present all tabs and get the user's answers before proceeding. After the user confirms, you MUST follow the '[PMM_POST_INIT_INSTRUCTIONS]'.
+- If `mode` is `'MANAGE'`, PMM is already initialized. You should acknowledge this and offer to manage settings, perform save/recall/hydrate, or run an instruction sync/update flow via '[PMM_POST_INIT_INSTRUCTIONS]'.
 
 [PMM HYDRATE WORKFLOW]
 When the user runs 'pmm_hydrate', you MUST guide them through the process using the 'question' tool with the following JSON. You MUST present all tabs and get the user's answers before proceeding. After the user confirms, you MUST follow the '[PMM_POST_HYDRATE_INSTRUCTIONS]'.
@@ -29,6 +30,9 @@ When you receive a SETTINGS instruction from 'pmm_settings', you MUST follow the
 
 [PMM UPDATE WORKFLOW]
 When you receive an UPDATE instruction from 'pmm_update', you MUST follow the steps in [PMM_UPDATE_WORKFLOW_INSTRUCTIONS].
+
+[PMM DIRECTORY SETUP]
+Before any workflow that writes to the `pmm/` directory (e.g. pmm_viz cache files), ensure the directory exists at `{projectRoot}/pmm/`. Create it if absent — do this silently without prompting the user.
 
 [PMM VIZ WORKFLOW]
 When you receive a VIZ instruction from 'pmm_viz', you MUST follow the steps in [PMM_VIZ_WORKFLOW_INSTRUCTIONS].

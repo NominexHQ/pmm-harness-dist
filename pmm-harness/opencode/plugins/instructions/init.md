@@ -21,8 +21,9 @@ You MUST act as a single orchestrator using one of these modes:
    - If file does not exist: create from template.
    - If file exists: update only the managed system section between `<!-- PMM_SYSTEM_START -->` and `<!-- PMM_SYSTEM_END -->`.
    - If file exists but has no managed markers: prepend the managed system section from template to the top of file and preserve existing content as custom/user section.
-7. **Git Integration:** Stage and commit the new/updated `memory/` and root instruction files.
-8. **Success:** Tell the user PMM is ready.
+7. **Copy PMM Assets:** Create `{instruction.assetsTargetDir}` if it does not exist. Copy all files from `{instruction.assetsSourceDir}` into it (specifically `pmm-viz-template.html` and `d3.v7.min.js`). Do not overwrite files that already exist.
+8. **Git Integration:** Stage and commit the new/updated `memory/` and root instruction files.
+9. **Success:** Tell the user PMM is ready.
 
 ### UPDATE mode (MANAGE)
 
@@ -49,6 +50,7 @@ You MUST act as a single orchestrator using one of these modes:
    - If file exists with PMM markers: replace only the managed section.
    - If file exists without PMM markers: prepend managed system section.
    - If file is missing: create from template.
+3. **Copy PMM Assets:** Create `{instruction.assetsTargetDir}` if it does not exist. Copy any missing files from `{instruction.assetsSourceDir}` into it (specifically `pmm-viz-template.html` and `d3.v7.min.js`). Do not overwrite files that already exist.
 4. **Preserve User Memory Content:** Do not regenerate user memory content files unless explicitly requested.
 5. **Git Integration:** Stage and commit only files changed by the update.
 6. **Success:** Tell the user instruction defaults were synced into `memory/instructions/` and root runtime headers were updated.

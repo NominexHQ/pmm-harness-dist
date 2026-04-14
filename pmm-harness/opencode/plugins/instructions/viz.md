@@ -34,17 +34,21 @@ Use the `question` tool (or equivalent confirmation mechanism) to present a Yes 
 git -C "{instruction.projectRoot}" rev-parse HEAD:memory 2>/dev/null
 ```
 
-1. If `instruction.cachePath` exists, read first line for:
+2. Scan for existing cache files matching `{instruction.projectRoot}/pmm/viz-*.html`. Sort lexicographically descending (newest timestamp first) and take the first match.
+
+3. If a candidate exists, read its first line and check for:
 
 ```text
 <!-- pmm-cache: HASH SCOPE -->
 ```
 
-1. If hash and scope both match, open the cache file and return:
+4. If hash and scope both match, open that existing file and return:
 
 ```text
-Opened cached visualization.
+Opened cached visualization ({filename}).
 ```
+
+5. Otherwise proceed to Step 2. `instruction.cachePath` (the timestamped path supplied by the tool) is the write target for the new file.
 
 ## Step 2 — Parse HEAD memory data
 
