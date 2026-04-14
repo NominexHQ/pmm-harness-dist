@@ -1,4 +1,6 @@
 # PMM Dual-Runtime Starter Repo
+## Poor Man's Memory (Programmable Memory Management)
+
 
 Clone-and-go PMM runtime bundle for unified memory across OpenCode and Claude Code.
 
