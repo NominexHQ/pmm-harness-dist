@@ -13,6 +13,19 @@ Use the tool payload:
 - `instruction.templatePath`
 - `instruction.d3Path`
 
+## Step 0 — Warn and confirm
+
+Before doing any work, display this warning and ask the user to confirm:
+
+> **Warning:** `pmm_viz` reads all memory files, samples up to 50 git commits, reads a D3 bundle and an HTML template, then writes a cache file. This can consume a significant number of tokens, especially in large projects.
+>
+> Scope requested: `{instruction.scope}`. Proceed?
+
+Use the `question` tool (or equivalent confirmation mechanism) to present a Yes / No prompt.
+
+- If the user answers **No** (or equivalent): stop immediately, return `pmm_viz cancelled.`, do not proceed.
+- If the user answers **Yes** (or equivalent): continue to Step 1.
+
 ## Step 1 — Cache check
 
 1. Compute the current memory tree hash:
