@@ -74,6 +74,10 @@ Also present (Claude-only extras):
 
 1. Runtime command parity complete.
 
+## Backlog — OpenCode save/git behavior
+
+- [ ] Update `pmm_save` behavior: when git is configured, run `git commit` on normal save; only run `git push` as part of the full-save flow after commit. Spec: `dev-notes/opencode-pmm-save-git-behavior.md`.
+
 ## Recent completion notes
 
 - `pmm_query` implemented in OpenCode with instruction-driven query workflow.
