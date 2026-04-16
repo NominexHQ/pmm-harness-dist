@@ -91,7 +91,7 @@ PMM Update Available: v{local} -> v{upstream}
 
 Changed files:
   M  .opencode/plugins/nominex-pmm.ts
-  A  .opencode/plugins/instructions/update.md
+  A  .opencode/plugins/instructions/pmm-update.md
   D  .opencode/plugins/instructions/old-file.md
 
 Merge (additive only):

@@ -17,7 +17,7 @@ You MUST act as a single orchestrator using one of these modes:
 3. **Write Config:** Create `memory/config.md`. Map the user's choices to the config format.
 4. **Create Memory Files:** For each active file, write its content using the templates.
 5. **Seed Instruction Overrides:** Copy default PMM instruction files from `.opencode/plugins/instructions/` into `memory/instructions/`.
-6. **Initialize Root Runtime Files:** Ensure both `AGENT.md` and `CLAUDE.md` exist at project root using `template-agent.md` and `template-claude.md` from the active instruction source.
+6. **Initialize Root Runtime Files:** Ensure both `AGENT.md` and `CLAUDE.md` exist at project root using `pmm-template-agent.md` and `pmm-nd `pmm-template-claude.md` from the active instruction source.
    - If file does not exist: create from template.
    - If file exists: update only the managed system section between `<!-- PMM_SYSTEM_START -->` and `<!-- PMM_SYSTEM_END -->`.
    - If file exists but has no managed markers: prepend the managed system section from template to the top of file and preserve existing content as custom/user section.
@@ -29,23 +29,23 @@ You MUST act as a single orchestrator using one of these modes:
 
 1. **Ensure Override Directory:** Ensure `memory/instructions/` exists.
 2. **Update Non-User Instruction Files:** Refresh these files in `memory/instructions/` from `.opencode/plugins/instructions/`:
-   - `system.md`
-   - `init.md`
-   - `hydrate.md`
-   - `save.md`
-   - `recall.md`
-   - `query.md`
-   - `status.md`
-   - `dump.md`
-   - `settings.md`
-   - `update.md`
-   - `viz.md`
-   - `system-tweaks.md`
-   - `init-questions.json`
-   - `hydrate-questions.json`
-   - `settings-questions.json`
-   - `template-agent.md`
-   - `template-claude.md`
+   - `pmm-system.md`
+   - `pmm-init.md`
+   - `pmm-hydrate.md`
+   - `pmm-save.md`
+   - `pmm-recall.md`
+   - `pmm-query.md`
+   - `pmm-status.md`
+   - `pmm-dump.md`
+   - `pmm-settings.md`
+   - `pmm-update.md`
+   - `pmm-viz.md`
+   - `pmm-system-tweaks.md`
+   - `pmm-init-questions.json`
+   - `pmm-hydrate-questions.json`
+   - `pmm-settings-questions.json`
+   - `pmm-template-agent.md`
+   - `pmm-pmm-template-claude.md`
 3. **Update Root Runtime Files:** For project-root `AGENT.md` and `CLAUDE.md`, refresh the managed system section.
    - If file exists with PMM markers: replace only the managed section.
    - If file exists without PMM markers: prepend managed system section.

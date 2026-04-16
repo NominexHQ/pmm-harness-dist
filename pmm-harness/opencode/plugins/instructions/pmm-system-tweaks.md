@@ -15,9 +15,9 @@ recall memory content).
 
 1. Clarify target behavior in one sentence before editing.
 2. Prefer editing prompt files in `.opencode/plugins/instructions/` over hardcoding in TypeScript.
-3. Keep OpenCode and Claude Code guidance aligned when shared behavior is intended.
+3. Keep guidance consistent across OpenCode instructions, prompts, and runtime defaults.
 4. Update or add placeholder blocks in the system transform when introducing new instruction files.
-5. Validate references so every `[TOKEN]` used in `system.md` has matching injected content.
+5. Validate references so every `[TOKEN]` used in `pmm-pmm-pmm-system.md` has matching injected content.
 6. Preserve backward compatibility unless the user explicitly requests a breaking change.
 
 ## Guardrails

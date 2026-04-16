@@ -33,9 +33,9 @@
     },
     {
       "header": "Agent Personalization",
-      "question": "Configure the agents handling your memory. Only applicable if using you intend to run alongside Claude Code.",
+      "question": "Configure the agents handling your memory.",
       "options": [
-        { "label": "Model: Haiku", "description": "Fast and cheap for maintenance (Default). Note: Model selection is a Claude Code-only feature; OpenCode uses the host model for all operations." },
+        { "label": "Model: Haiku", "description": "Fast and cheap for maintenance (Default). In OpenCode, model selection is metadata and the host model executes operations." },
         { "label": "Context: Tiered", "description": "Load core files first, others on demand (Saves tokens, Recommended)." },
         { "label": "Context: Full", "description": "Load all active files at session start." }
       ],

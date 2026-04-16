@@ -10,7 +10,7 @@ const { schema: z } = tool;
 const MEMORY_INSTRUCTIONS_DIR = "memory/instructions";
 const PLUGIN_INSTRUCTIONS_DIR = ".opencode/plugins/instructions";
 
-const MEMORY_TEMPLATES_PATH_DEFAULT = ".opencode/plugins/instructions/memory-templates.md";
+const MEMORY_TEMPLATES_PATH_DEFAULT = ".opencode/plugins/instructions/pmm-memory-templates.md";
 
 const DEFAULT_MEMORY_TEMPLATES_MARKDOWN = `## timeline.md
 ### Timeline
@@ -87,18 +87,56 @@ function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
   return fallbackProjectRoot || context.directory || process.cwd();
 }
 
-function resolveInstructionPath(root: string, name: string, extension: "md" | "json"): string | null {
-  const memoryPath = join(root, MEMORY_INSTRUCTIONS_DIR, `${name}.${extension}`);
-  if (existsSync(memoryPath)) {
-    return memoryPath;
-  }
+function resolveInstructionPath(root: string, names: string[], extension: "md" | "json"): string | null {
+  for (const name of names) {
+    const memoryPath = join(root, MEMORY_INSTRUCTIONS_DIR, `${name}.${extension}`);
+    if (existsSync(memoryPath)) {
+      return memoryPath;
+    }
 
-  const pluginPath = join(root, PLUGIN_INSTRUCTIONS_DIR, `${name}.${extension}`);
-  if (existsSync(pluginPath)) {
-    return pluginPath;
+    const pluginPath = join(root, PLUGIN_INSTRUCTIONS_DIR, `${name}.${extension}`);
+    if (existsSync(pluginPath)) {
+      return pluginPath;
+    }
   }
 
   return null;
+}
+
+function instructionNameCandidates(name: string): string[] {
+  const trimmed = name.trim();
+  if (trimmed.startsWith("pmm-")) {
+    return [trimmed];
+  }
+  return [`pmm-${trimmed}`];
+}
+
+function listExistingInstructionPaths(root: string, name: string, extension: "md" | "json"): string[] {
+  const candidates = instructionNameCandidates(name);
+  const existing: string[] = [];
+  for (const candidate of candidates) {
+    const memoryPath = join(root, MEMORY_INSTRUCTIONS_DIR, `${candidate}.${extension}`);
+    if (existsSync(memoryPath)) {
+      existing.push(memoryPath);
+    }
+    const pluginPath = join(root, PLUGIN_INSTRUCTIONS_DIR, `${candidate}.${extension}`);
+    if (existsSync(pluginPath)) {
+      existing.push(pluginPath);
+    }
+  }
+  return existing;
+}
+
+function warnOnInstructionCollision(root: string, name: string, extension: "md" | "json", selectedPath: string | null): void {
+  const existing = listExistingInstructionPaths(root, name, extension);
+  if (existing.length <= 1) {
+    return;
+  }
+  const relativeExisting = existing.map((p) => p.replace(`${root}/`, ""));
+  const selected = selectedPath ? selectedPath.replace(`${root}/`, "") : "none";
+  console.warn(
+    `[Nominex PMM] Instruction collision for ${name}.${extension}; using ${selected}; candidates: ${relativeExisting.join(", ")}`
+  );
 }
 
 /**
@@ -106,7 +144,8 @@ function resolveInstructionPath(root: string, name: string, extension: "md" | "j
  * Falls back to default if not found.
  */
 function loadInstruction(root: string, name: string, defaultValue: string): string {
-  const path = resolveInstructionPath(root, name, "md");
+  const path = resolveInstructionPath(root, instructionNameCandidates(name), "md");
+  warnOnInstructionCollision(root, name, "md", path);
   if (path) {
     try {
       return readFileSync(path, "utf-8");
@@ -122,7 +161,8 @@ function loadInstruction(root: string, name: string, defaultValue: string): stri
  * Falls back to default if not found or invalid.
  */
 function loadQuestionsConfig(root: string, name: string, defaultValue: QuestionsConfig): QuestionsConfig {
-  const path = resolveInstructionPath(root, name, "json");
+  const path = resolveInstructionPath(root, instructionNameCandidates(name), "json");
+  warnOnInstructionCollision(root, name, "json", path);
   if (path) {
     try {
       const parsed = JSON.parse(readFileSync(path, "utf-8"));
@@ -427,7 +467,7 @@ const DEFAULT_INIT_QUESTIONS: QuestionsConfig = {
       "header": "Agent Personalization",
       "question": "Configure the agents handling your memory.",
       "options": [
-        { "label": "Model: Haiku", "description": "Fast and cheap for maintenance (Default). Note: Model selection is a Claude Code-only feature; OpenCode uses the host model for all operations." },
+        { "label": "Model: Haiku", "description": "Fast and cheap for maintenance (Default). In OpenCode, model selection is metadata and the host model executes operations." },
         { "label": "Context: Tiered", "description": "Load core files first, others on demand (Saves tokens, Recommended)." },
         { "label": "Context: Full", "description": "Load all active files at session start." }
       ],
@@ -559,22 +599,22 @@ export const NominexPMMPlugin: Plugin = async ({ client, worktree: pluginWorktre
     "experimental.chat.system.transform": async (input, output) => {
       const root = pluginWorktree || process.cwd();
       
-      const systemInstructions = loadInstruction(root, "system", "");
-      const initQuestions = loadQuestionsConfig(root, "init-questions", DEFAULT_INIT_QUESTIONS);
-      const hydrateQuestions = loadQuestionsConfig(root, "hydrate-questions", DEFAULT_HYDRATE_QUESTIONS);
-      const settingsQuestions = loadQuestionsConfig(root, "settings-questions", DEFAULT_SETTINGS_QUESTIONS);
-      const memoryTemplatesMarkdown = loadInstruction(root, "memory-templates", DEFAULT_MEMORY_TEMPLATES_MARKDOWN);
-      const initInstructions = loadInstruction(root, "init", "");
-      const hydrateInstructions = loadInstruction(root, "hydrate", "");
-      const saveInstructions = loadInstruction(root, "save", "");
-      const recallInstructions = loadInstruction(root, "recall", "");
-      const queryInstructions = loadInstruction(root, "query", "");
-      const statusInstructions = loadInstruction(root, "status", "");
-      const dumpInstructions = loadInstruction(root, "dump", "");
-      const settingsInstructions = loadInstruction(root, "settings", "");
-      const updateInstructions = loadInstruction(root, "update", "");
-      const vizInstructions = loadInstruction(root, "viz", "");
-      const systemTweaksInstructions = loadInstruction(root, "system-tweaks", "");
+      const systemInstructions = loadInstruction(root, "pmm-system", "");
+      const initQuestions = loadQuestionsConfig(root, "pmm-init-questions", DEFAULT_INIT_QUESTIONS);
+      const hydrateQuestions = loadQuestionsConfig(root, "pmm-hydrate-questions", DEFAULT_HYDRATE_QUESTIONS);
+      const settingsQuestions = loadQuestionsConfig(root, "pmm-settings-questions", DEFAULT_SETTINGS_QUESTIONS);
+      const memoryTemplatesMarkdown = loadInstruction(root, "pmm-memory-templates", DEFAULT_MEMORY_TEMPLATES_MARKDOWN);
+      const initInstructions = loadInstruction(root, "pmm-init", "");
+      const hydrateInstructions = loadInstruction(root, "pmm-hydrate", "");
+      const saveInstructions = loadInstruction(root, "pmm-save", "");
+      const recallInstructions = loadInstruction(root, "pmm-recall", "");
+      const queryInstructions = loadInstruction(root, "pmm-query", "");
+      const statusInstructions = loadInstruction(root, "pmm-status", "");
+      const dumpInstructions = loadInstruction(root, "pmm-dump", "");
+      const settingsInstructions = loadInstruction(root, "pmm-settings", "");
+      const updateInstructions = loadInstruction(root, "pmm-update", "");
+      const vizInstructions = loadInstruction(root, "pmm-viz", "");
+      const systemTweaksInstructions = loadInstruction(root, "pmm-system-tweaks", "");
 
       const instructions = `
 ${systemInstructions}
