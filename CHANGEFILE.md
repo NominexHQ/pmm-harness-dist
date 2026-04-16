@@ -2,6 +2,14 @@
 
 Canonical development progress log for `pmm-harness-dist`.
 
+## 2026-04-16
+
+### OpenCode memory root resolution fix
+
+- Updated `pmm-harness/opencode/plugins/nominex-pmm.ts` root resolution to prefer the nearest plugin root derived from active runtime context.
+- Added `findNearestPluginRoot(...)` and updated `getRoot(...)` to avoid anchoring to a parent monorepo directory.
+- Fix ensures PMM init/read/save operations resolve `./memory` relative to the active harness repository, not parent workspace `memory/`.
+
 ## 2026-04-14
 
 ### Repository structure and distribution setup

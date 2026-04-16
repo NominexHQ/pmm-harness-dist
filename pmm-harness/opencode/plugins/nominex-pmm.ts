@@ -1,7 +1,7 @@
 import type { Plugin, ToolContext } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
 import { existsSync, readFileSync, readdirSync } from "fs";
-import { join } from "path";
+import { dirname, join, resolve } from "path";
 import { execSync } from "child_process";
 
 // Use the zod instance provided by the host tool to avoid version mismatches
@@ -82,8 +82,33 @@ interface SettingsSummary {
 // HELPER FUNCTIONS
 // ============================================================================
 
+function findNearestPluginRoot(startDir?: string): string | null {
+  if (!startDir) return null;
+
+  let current = resolve(startDir);
+  while (true) {
+    if (existsSync(join(current, ".opencode", "plugins", "nominex-pmm.ts"))) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+
+  return null;
+}
+
 function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
-  // Always anchor PMM paths to a stable project root instead of tool/runtime worktree context.
+  // Prefer the nearest plugin root from the active context so nested repos (e.g. alma-harness)
+  // resolve to their own ./memory directory instead of a parent workspace memory directory.
+  const candidates = [context.directory, context.worktree, fallbackProjectRoot, process.cwd()]
+    .filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    const resolvedRoot = findNearestPluginRoot(candidate);
+    if (resolvedRoot) return resolvedRoot;
+  }
+
   return fallbackProjectRoot || context.directory || process.cwd();
 }
 
