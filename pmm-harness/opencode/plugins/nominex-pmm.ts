@@ -1,14 +1,15 @@
 import type { Plugin, ToolContext } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
 import { existsSync, readFileSync, readdirSync } from "fs";
-import { dirname, join, resolve } from "path";
+import { join } from "path";
 import { execSync } from "child_process";
 
 // Use the zod instance provided by the host tool to avoid version mismatches
 const { schema: z } = tool;
 
-const MEMORY_INSTRUCTIONS_DIR = "memory/instructions";
+const MEMORY_INSTRUCTIONS_DIR = "config/instructions";
 const PLUGIN_INSTRUCTIONS_DIR = ".opencode/plugins/instructions";
+const PMM_MEMORY_DIR_DEFAULT = "memory";
 
 const MEMORY_TEMPLATES_PATH_DEFAULT = ".opencode/plugins/instructions/pmm-memory-templates.md";
 
@@ -38,7 +39,6 @@ Mistakes learned
 Format: append
 `;
 
-console.log("[Nominex PMM] Plugin file is being loaded!");
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -82,34 +82,51 @@ interface SettingsSummary {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function findNearestPluginRoot(startDir?: string): string | null {
-  if (!startDir) return null;
-
-  let current = resolve(startDir);
-  while (true) {
-    if (existsSync(join(current, ".opencode", "plugins", "nominex-pmm.ts"))) {
-      return current;
-    }
-    const parent = dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-
-  return null;
+function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
+  // Always anchor PMM paths to a stable project root instead of tool/runtime worktree context.
+  return fallbackProjectRoot || context.directory || process.cwd();
 }
 
-function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
-  // Prefer the nearest plugin root from the active context so nested repos (e.g. alma-harness)
-  // resolve to their own ./memory directory instead of a parent workspace memory directory.
-  const candidates = [context.directory, context.worktree, fallbackProjectRoot, process.cwd()]
-    .filter((value): value is string => Boolean(value));
+function safeRead(path: string): string {
+  try { return existsSync(path) ? readFileSync(path, "utf-8") : ""; }
+  catch { return ""; }
+}
 
-  for (const candidate of candidates) {
-    const resolvedRoot = findNearestPluginRoot(candidate);
-    if (resolvedRoot) return resolvedRoot;
+/**
+ * Resolves the PMM memory directory for this project.
+ * Discovery chain:
+ *   1. CLAUDE.md / AGENTS.md — look for `pmm_memory_dir: <path>` directive
+ *   2. config/agents.md roster — find vera row, use Memory Dir column
+ *   3. Default: "memory"
+ * Each candidate is validated: the directory must contain config.md.
+ */
+function resolvePmmMemoryDir(root: string): string {
+  // 1. Check CLAUDE.md / AGENTS.md for explicit directive
+  for (const file of ["CLAUDE.md", "AGENTS.md"]) {
+    const content = safeRead(join(root, file));
+    if (content) {
+      const match = content.match(/pmm[_-]memory[_-]dir:\s*`?([^\s`]+)`?/i);
+      if (match) {
+        const dir = match[1].replace(/^\.?\/?/, "").replace(/\/$/, "");
+        if (existsSync(join(root, dir, "config.md"))) return dir;
+      }
+    }
   }
-
-  return fallbackProjectRoot || context.directory || process.cwd();
+  // 2. Check config/agents.md roster (vera ecosystem)
+  const rosterRaw = safeRead(join(root, "config", "agents.md"));
+  if (rosterRaw) {
+    for (const line of rosterRaw.split("\n")) {
+      if (/\|\s*vera\s*\|/.test(line)) {
+        const cols = line.split("|").map(c => c.trim());
+        if (cols[3]) {
+          const dir = cols[3].replace(/`/g, "").replace(/^\.?\/?/, "").replace(/\/$/, "");
+          if (existsSync(join(root, dir, "config.md"))) return dir;
+        }
+      }
+    }
+  }
+  // 3. Default
+  return PMM_MEMORY_DIR_DEFAULT;
 }
 
 function resolveInstructionPath(root: string, names: string[], extension: "md" | "json"): string | null {
@@ -136,41 +153,12 @@ function instructionNameCandidates(name: string): string[] {
   return [`pmm-${trimmed}`];
 }
 
-function listExistingInstructionPaths(root: string, name: string, extension: "md" | "json"): string[] {
-  const candidates = instructionNameCandidates(name);
-  const existing: string[] = [];
-  for (const candidate of candidates) {
-    const memoryPath = join(root, MEMORY_INSTRUCTIONS_DIR, `${candidate}.${extension}`);
-    if (existsSync(memoryPath)) {
-      existing.push(memoryPath);
-    }
-    const pluginPath = join(root, PLUGIN_INSTRUCTIONS_DIR, `${candidate}.${extension}`);
-    if (existsSync(pluginPath)) {
-      existing.push(pluginPath);
-    }
-  }
-  return existing;
-}
-
-function warnOnInstructionCollision(root: string, name: string, extension: "md" | "json", selectedPath: string | null): void {
-  const existing = listExistingInstructionPaths(root, name, extension);
-  if (existing.length <= 1) {
-    return;
-  }
-  const relativeExisting = existing.map((p) => p.replace(`${root}/`, ""));
-  const selected = selectedPath ? selectedPath.replace(`${root}/`, "") : "none";
-  console.warn(
-    `[Nominex PMM] Instruction collision for ${name}.${extension}; using ${selected}; candidates: ${relativeExisting.join(", ")}`
-  );
-}
-
 /**
  * Loads an instruction template from the instructions directory.
  * Falls back to default if not found.
  */
 function loadInstruction(root: string, name: string, defaultValue: string): string {
   const path = resolveInstructionPath(root, instructionNameCandidates(name), "md");
-  warnOnInstructionCollision(root, name, "md", path);
   if (path) {
     try {
       return readFileSync(path, "utf-8");
@@ -187,7 +175,6 @@ function loadInstruction(root: string, name: string, defaultValue: string): stri
  */
 function loadQuestionsConfig(root: string, name: string, defaultValue: QuestionsConfig): QuestionsConfig {
   const path = resolveInstructionPath(root, instructionNameCandidates(name), "json");
-  warnOnInstructionCollision(root, name, "json", path);
   if (path) {
     try {
       const parsed = JSON.parse(readFileSync(path, "utf-8"));
@@ -618,7 +605,6 @@ const DEFAULT_SETTINGS_QUESTIONS: QuestionsConfig = {
 // ============================================================================
 
 export const NominexPMMPlugin: Plugin = async ({ client, worktree: pluginWorktree }) => {
-  console.log("[Nominex PMM] Plugin function executed!");
   
   return {
     "experimental.chat.system.transform": async (input, output) => {
@@ -709,7 +695,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
           const mode = existsSync(memoryDir) ? "MANAGE" : "INSTALL";
           return JSON.stringify({
             mode,
@@ -736,7 +722,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
           const templatesPath = join(root, MEMORY_TEMPLATES_PATH_DEFAULT);
           
           if (!existsSync(memoryDir)) {
@@ -788,7 +774,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
           
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -825,7 +811,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -860,7 +846,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -894,7 +880,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -927,7 +913,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -969,7 +955,7 @@ ${systemTweaksInstructions}
               gitRepoRoot: gitRepoRoot || root,
               localVersion: readLocalVersion(root),
               localVersionPath: join(root, "pmm", "version.json"),
-              memoryInitialized: existsSync(join(root, "memory")),
+              memoryInitialized: existsSync(join(root, resolvePmmMemoryDir(root))),
               gitStatus: validateGit(root)
             }
           });
@@ -983,7 +969,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -1016,7 +1002,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, "memory");
+          const memoryDir = join(root, resolvePmmMemoryDir(root));
           return JSON.stringify({
             directory: context.directory,
             worktree: context.worktree,
