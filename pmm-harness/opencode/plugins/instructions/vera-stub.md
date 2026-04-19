@@ -44,7 +44,7 @@ This file documents the current Vera OpenCode implementation status.
 	- presentation modes (`synthesized` default, `bullet`, `timeline`, `raw`)
 	- compatibility shortcut for `mode` (`now`/`full`) while preserving OpenCode freeform behavior
 - `vera_brief` is implemented for OpenCode with framework + instruction precedence pattern:
-	- instruction source precedence: `memory/instructions/vera-brief.md` -> `.opencode/plugins/instructions/vera-brief.md` -> built-in defaults
+	- instruction source precedence: `config/instructions/vera-brief.md` -> `.opencode/plugins/instructions/vera-brief.md` -> built-in defaults
 	- role-specific deltas include concrete observations and role-specific inferences
 	- trickle-feed rows include expected memory deltas
 	- relevant verbatim quotes are included with source attribution metadata and timestamp when available

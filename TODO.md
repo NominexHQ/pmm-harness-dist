@@ -66,6 +66,14 @@ Also present (Claude-only extras):
 - [ ] Track fix for slash-form invocation once root cause is resolved.
 - [ ] Remove workaround note only after verified fix in real OpenCode session.
 
+## Repo hygiene (Codex cold-read gaps, S153)
+
+- [ ] Add LICENSE file (MIT per manifest, but no LICENSE file exists in repo)
+- [ ] Fix manifest repo URL — `.claude-plugin/plugin.json` references `NominexHQ/poor-man-memory`, actual repo is `NominexHQ/pmm-plugin`
+- [ ] Add CI workflow (`.github/workflows/`) — currently only a PR template exists
+- [ ] Fix stale/brittle tests — `test-load-strategies.sh` passes 6/22, `test-hook-loading.sh` passes 13/44 in clean clone
+- [ ] `pmm:update` references `pmm/version.json` (only `pmm/.gitkeep` exists) and clones `NominexHQ/poor-man-memory` instead of current repo name
+
 ## Viz template known bugs
 
 - [ ] **Session list overflow** — the sessions panel in `pmm-viz-template.html` is taller than its container's vertical height with no scroll. Fix: add `overflow-y: auto` (or `scroll`) to the sessions list container CSS.

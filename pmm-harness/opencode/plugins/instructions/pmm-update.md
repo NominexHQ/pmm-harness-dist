@@ -101,7 +101,7 @@ Merge (additive only):
 
 Unchanged: 8 files
 Memory files: untouched (as always)
-Overrides in memory/instructions/: untouched
+Overrides in config/instructions/: untouched
 ```
 
 Use the `question` tool to ask:
@@ -137,7 +137,7 @@ Merge rules:
 Never touch:
 
 - any file in `memory/`
-- any file in `memory/instructions/`
+- any file in `config/instructions/`
 - `pmm/viz-cache.html`
 - any local-only settings file if present
 
@@ -167,7 +167,7 @@ git commit -m "pmm: update to v{new_version}"
 ## Notes
 
 - Never touch `memory/` content during update except to add new file types introduced by the update.
-- Never overwrite `memory/instructions/` because those are user-managed overrides.
+- Never overwrite `config/instructions/` because those are user-managed overrides.
 - Merge, do not replace, managed files and settings files.
 - Pre-version installs are valid: missing `pmm/version.json` means `0.0.0` and full sync can be offered.
 - File moves and renames should appear as delete + add via `files.system`.

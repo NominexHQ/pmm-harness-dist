@@ -1,6 +1,6 @@
 # Vera Brief Prompt (Plugin Fallback)
 
-Fallback guidance for `vera_brief` when no user override exists in `memory/instructions/vera-brief.md`.
+Fallback guidance for `vera_brief` when no user override exists in `config/instructions/vera-brief.md`.
 
 - Generate read-only, role-aware briefings.
 - Include observations + inferences for each delta.
