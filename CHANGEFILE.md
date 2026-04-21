@@ -2,13 +2,14 @@
 
 Canonical development progress log for `pmm-harness-dist`.
 
-## 2026-04-16
+## 2026-04-21
 
-### OpenCode memory root resolution fix
+### Licensing and hygiene (S157)
 
-- Updated `pmm-harness/opencode/plugins/nominex-pmm.ts` root resolution to prefer the nearest plugin root derived from active runtime context.
-- Added `findNearestPluginRoot(...)` and updated `getRoot(...)` to avoid anchoring to a parent monorepo directory.
-- Fix ensures PMM init/read/save operations resolve `./memory` relative to the active harness repository, not parent workspace `memory/`.
+- Git history rewritten via `git filter-repo`: unified all author emails to GitHub noreply address.
+- Added PolyForm Noncommercial 1.0.0 license (`LICENSE.md`). Free for personal/non-commercial use; commercial production requires separate license from NominexHQ.
+- Updated README: license section, pmm-plugin archive notice.
+- Upstream `NominexHQ/pmm-plugin` archived with redirect to this repo.
 
 ## 2026-04-14
 

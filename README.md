@@ -259,13 +259,17 @@ This repository packages a unified PMM layer across two independent runtimes (Op
 
 **Upstream source repositories:**
 
-- **pmm-plugin** — https://github.com/NominexHQ/pmm-plugin  
-  Source of truth for Claude plugin implementation. Used for snapshot cloning during builds.
+- **pmm-plugin** — https://github.com/NominexHQ/pmm-plugin *(archived)*  
+  Former source of truth for Claude plugin implementation. Used for snapshot cloning during builds. Development continues here in pmm-harness-dist.
 
 **Distribution:**
 
 - **pmm-harness-dist** — https://github.com/NominexHQ/pmm-harness-dist  
   This repository. Ready-to-use packaging for both runtimes. Published as public reference.
+
+## License
+
+PolyForm Noncommercial 1.0.0. Free for personal and non-commercial use. Commercial production use requires a separate license from NominexHQ. See [LICENSE.md](LICENSE.md).
 
 ## Developer notes
 
