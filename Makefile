@@ -26,17 +26,19 @@ endif
 
 help:
 	@echo "Targets:"
-	@echo "  make                Build both harness targets, sync plugin version, and bump marketplace patch version"
-	@echo "  make -- --major     Build both harness targets, sync plugin version, and bump marketplace major version"
-	@echo "  make -- --minor     Build both harness targets, sync plugin version, and bump marketplace minor version"
-	@echo "  make -- --patch     Build both harness targets, sync plugin version, and bump marketplace patch version"
+	@echo "  make                Build OpenCode harness, sync plugin version, and bump marketplace patch version"
+	@echo "  make -- --major     Build OpenCode harness, sync plugin version, and bump marketplace major version"
+	@echo "  make -- --minor     Build OpenCode harness, sync plugin version, and bump marketplace minor version"
+	@echo "  make -- --patch     Build OpenCode harness, sync plugin version, and bump marketplace patch version"
+	@echo ""
+	@echo "  Claude Code plugin (pmm-harness/claudecode/pmm-plugin/) is canonical — edit directly."
 	@echo "  make help           Show this help text"
 
 build: build-harness bump-marketplace-version
 	@echo "Completed pmm-dist build with $(VERSION_BUMP) marketplace version bump."
 
 build-harness:
-	@$(MAKE) -C "$(HARNESS_DIR)" build-opencode build-claudecode
+	@$(MAKE) -C "$(HARNESS_DIR)" build-opencode
 
 bump-marketplace-version:
 	@python3 "$(CURDIR)/bump_version.py" "$(MARKETPLACE_FILE)" "$(CLAUDECODE_PLUGIN_FILE)" "$(VERSION_BUMP)"

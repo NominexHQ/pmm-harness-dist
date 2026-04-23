@@ -3,9 +3,6 @@ SHELL := /bin/zsh
 PROJECT_ROOT := $(abspath ../..)
 SRC_OPENCODE := $(PROJECT_ROOT)/.opencode
 DST_OPENCODE := $(PROJECT_ROOT)/pmm-harness-dist/pmm-harness/opencode
-DST_CLAUDECODE := $(PROJECT_ROOT)/pmm-harness-dist/pmm-harness/claudecode
-CLAUDECODE_PLUGIN_REPO := https://github.com/NominexHQ/pmm-plugin
-CLAUDECODE_PLUGIN_DST := $(DST_CLAUDECODE)/pmm-plugin
 
 # Shipping allowlist: only files required to distribute the OpenCode PMM plugin.
 DIST_ROOT_FILES := package.json opencode.json
@@ -13,18 +10,17 @@ DIST_PLUGIN_FILES := plugins/nominex-pmm.ts
 DIST_PLUGIN_DIRS := plugins/instructions
 
 .PHONY: help \
-	build-opencode build-opencode-bash clean-opencode show-opencode-files \
-	build-claudecode build-claudecode-bash clean-claudecode
+	build-opencode build-opencode-bash clean-opencode show-opencode-files
 
 help:
 	@echo "Targets:"
 	@echo "  make build-opencode      Copy shipping artifacts into pmm-harness-dist/pmm-harness/opencode"
 	@echo "  make build-opencode-bash Same as build-opencode, but forces /bin/bash as the shell"
-	@echo "  make build-claudecode    Clone canonical pmm-plugin into claudecode harness and strip .git"
-	@echo "  make build-claudecode-bash Same as build-claudecode, but forces /bin/bash as the shell"
-	@echo "  make clean-claudecode    Remove generated pmm-plugin snapshot from claudecode harness"
 	@echo "  make clean-opencode      Remove generated harness files from pmm-harness-dist/pmm-harness/opencode"
 	@echo "  make show-opencode-files Show source files that are included in the OpenCode harness build"
+	@echo ""
+	@echo "Claude Code plugin (claudecode/pmm-plugin/) is canonical in this repo."
+	@echo "Edit it directly — no build step needed."
 
 clean-opencode:
 	@mkdir -p "$(DST_OPENCODE)"
@@ -48,19 +44,6 @@ build-opencode: clean-opencode
 
 build-opencode-bash:
 	@$(MAKE) SHELL=/bin/bash build-opencode
-
-clean-claudecode:
-	@mkdir -p "$(DST_CLAUDECODE)"
-	@rm -rf "$(CLAUDECODE_PLUGIN_DST)"
-
-build-claudecode: clean-claudecode
-	@mkdir -p "$(DST_CLAUDECODE)"
-	@git clone --depth 1 "$(CLAUDECODE_PLUGIN_REPO)" "$(CLAUDECODE_PLUGIN_DST)"
-	@rm -rf "$(CLAUDECODE_PLUGIN_DST)/.git"
-	@find "$(CLAUDECODE_PLUGIN_DST)" -name '.DS_Store' -delete
-
-build-claudecode-bash:
-	@$(MAKE) SHELL=/bin/bash build-claudecode
 
 show-opencode-files:
 	@echo "Root files:"
