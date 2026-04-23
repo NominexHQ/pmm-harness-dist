@@ -9,6 +9,9 @@ DIST_ROOT_FILES := package.json opencode.json
 DIST_PLUGIN_FILES := plugins/nominex-pmm.ts
 DIST_PLUGIN_DIRS := plugins/instructions
 
+# Claude Code plugin (claudecode/pmm-plugin/) is canonical in this repo.
+# No upstream clone — edit directly.
+
 .PHONY: help \
 	build-opencode build-opencode-bash clean-opencode show-opencode-files
 
@@ -19,8 +22,7 @@ help:
 	@echo "  make clean-opencode      Remove generated harness files from pmm-harness-dist/pmm-harness/opencode"
 	@echo "  make show-opencode-files Show source files that are included in the OpenCode harness build"
 	@echo ""
-	@echo "Claude Code plugin (claudecode/pmm-plugin/) is canonical in this repo."
-	@echo "Edit it directly — no build step needed."
+	@echo "  Claude Code plugin (claudecode/pmm-plugin/) is canonical — edit directly."
 
 clean-opencode:
 	@mkdir -p "$(DST_OPENCODE)"
