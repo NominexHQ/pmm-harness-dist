@@ -209,6 +209,10 @@ Use the same agent prompt as single strategy, substituting each tier's file list
 
 After agent(s) return, main context runs the commit. **Agents do not run git commands.**
 
+**Sync-only check:** If `.pmm-sync-only` exists in the memory root (`memory/.pmm-sync-only`), skip ALL git operations (add, commit, push). This machine is a sync peer — files were updated by the maintain agent, and an external sync tool (e.g. Syncthing) will propagate them to the git authority machine. Report: `pmm-save — files updated (sync-only mode, git skipped)` and proceed to Step 7.
+
+If `.pmm-sync-only` does not exist, proceed with normal commit:
+
 ```bash
 git add memory/ && git reset HEAD memory/secrets.md 2>/dev/null; git commit -m "memory: <brief description>"
 ```
