@@ -1,5 +1,7 @@
 # Poor Man's Memory
 
+> **This repository is archived.** Development continues at [NominexHQ/pmm-harness-dist](https://github.com/NominexHQ/pmm-harness-dist), which packages PMM for both Claude Code and OpenCode runtimes.
+
 Structured, git-backed memory for Claude Code. Memory that compounds, not rots.
 
 If you have ever had AI hallucinate and make things up (and gaslight you, even): it's because summaries do not preserve nuance.

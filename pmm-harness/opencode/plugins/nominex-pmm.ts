@@ -95,13 +95,35 @@ function safeRead(path: string): string {
 /**
  * Resolves the PMM memory directory for this project.
  * Discovery chain:
- *   1. CLAUDE.md / AGENTS.md — look for `pmm_memory_dir: <path>` directive
- *   2. config/agents.md roster — find vera row, use Memory Dir column
- *   3. Default: "memory"
+ *   1. PMM_MEMORY_DIR env var (absolute or relative to root)
+ *   2. CLAUDE.md / AGENTS.md in cwd — look for `pmm_memory_dir: <path>` directive
+ *   3. CLAUDE.md / AGENTS.md in root — same check at git root
+ *   4. Default: "memory"
  * Each candidate is validated: the directory must contain config.md.
  */
 function resolvePmmMemoryDir(root: string): string {
-  // 1. Check CLAUDE.md / AGENTS.md for explicit directive
+  // 1. Env var override — allows dispatcher to set per-agent memory dir
+  const envDir = process.env.PMM_MEMORY_DIR;
+  if (envDir) {
+    const resolved = envDir.startsWith("/") ? envDir : join(root, envDir);
+    if (existsSync(join(resolved, "config.md"))) return envDir;
+  }
+  // 2. Check CLAUDE.md in cwd (may differ from root when --dir is used)
+  const cwd = process.cwd();
+  if (cwd !== root) {
+    for (const file of ["CLAUDE.md", "AGENTS.md"]) {
+      const content = safeRead(join(cwd, file));
+      if (content) {
+        const match = content.match(/pmm[_-]memory[_-]dir:\s*`?([^\s`]+)`?/i);
+        if (match) {
+          const dir = match[1].replace(/^\.?\/?/, "").replace(/\/$/, "");
+          const abs = join(cwd, dir);
+          if (existsSync(join(abs, "config.md"))) return abs;
+        }
+      }
+    }
+  }
+  // 3. Check CLAUDE.md / AGENTS.md at git root
   for (const file of ["CLAUDE.md", "AGENTS.md"]) {
     const content = safeRead(join(root, file));
     if (content) {
@@ -112,20 +134,7 @@ function resolvePmmMemoryDir(root: string): string {
       }
     }
   }
-  // 2. Check config/agents.md roster (vera ecosystem)
-  const rosterRaw = safeRead(join(root, "config", "agents.md"));
-  if (rosterRaw) {
-    for (const line of rosterRaw.split("\n")) {
-      if (/\|\s*vera\s*\|/.test(line)) {
-        const cols = line.split("|").map(c => c.trim());
-        if (cols[3]) {
-          const dir = cols[3].replace(/`/g, "").replace(/^\.?\/?/, "").replace(/\/$/, "");
-          if (existsSync(join(root, dir, "config.md"))) return dir;
-        }
-      }
-    }
-  }
-  // 3. Default
+  // 4. Default
   return PMM_MEMORY_DIR_DEFAULT;
 }
 
