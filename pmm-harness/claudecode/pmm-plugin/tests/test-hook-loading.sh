@@ -607,6 +607,33 @@ else
   fail "$T" "output only $output_bytes bytes — memory files may not be loading"
 fi
 
+# ── Category 6: Hook configuration contract ─────────────────────────────────
+
+section "Category 6: Hook configuration contract"
+
+HOOKS_JSON="$SCRIPT_DIR/../hooks/hooks.json"
+
+T="hooks.json uses SessionStart matcher pipe alternation"
+if grep -q '"matcher": "startup|resume|clear|compact"' "$HOOKS_JSON"; then
+  pass "$T"
+else
+  fail "$T" 'SessionStart matcher must be "startup|resume|clear|compact"'
+fi
+
+T="hooks.json quotes SessionStart script path"
+if grep -q '"command": "bash \\"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh\\""' "$HOOKS_JSON"; then
+  pass "$T"
+else
+  fail "$T" 'SessionStart command must quote ${CLAUDE_PLUGIN_ROOT} path'
+fi
+
+T="hooks.json quotes Stop script path"
+if grep -q '"command": "bash \\"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/should-save.sh\\""' "$HOOKS_JSON"; then
+  pass "$T"
+else
+  fail "$T" 'Stop command must quote ${CLAUDE_PLUGIN_ROOT} path'
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 TOTAL=$(( PASS + FAIL ))
