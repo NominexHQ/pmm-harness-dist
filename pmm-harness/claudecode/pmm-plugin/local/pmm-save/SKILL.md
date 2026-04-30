@@ -183,7 +183,7 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > | `vectors.md` | New semantic similarity discovered; cluster formed or revised |
 > | `taxonomies.md` | New category, classification system, or naming convention established |
 > | `standinginstructions.md` | User issues a persistent rule or directive |
-> | `threads-open.md` | New issue or project opened; task status changes; thread completed (replace with summary + reference) |
+> | `threads-open.md` | **Open:** task started but not finished; decision deferred; document partially drafted; follow-up identified but not executed; question needs more research. **Update:** task status changes. **Close:** work done — replace entry with closure line after archiving to threads-closed.md |
 > | `threads-closed.md` | Thread completed — append full detail before replacing completed thread from threads-open.md with a summary |
 >
 > Return a one-line summary of what was updated and in which files.
