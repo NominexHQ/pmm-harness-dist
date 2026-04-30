@@ -808,7 +808,16 @@ When a thread completes, move its full detail to threads-closed.md and replace w
   - Subjective or objective measures
 
 
-### Summary of the issue or project.
+### Summary
+
+[1-2 sentence description of the issue or project]
+
+### Tasks
+
+<!-- Add tasks when work is scoped. Update status in place as work progresses — do not delete completed items. -->
+<!-- [ ] not started | [-] in progress | [x] done -->
+<!-- Dates are optional but useful for blocked or long-running tasks. -->
+<!-- When all tasks are [x], consider the thread done. -->
 
 - [ ] Task one (started: [date], estimated completion: [date], updated: [date])
 - [ ] Task two
