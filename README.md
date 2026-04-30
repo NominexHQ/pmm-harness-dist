@@ -1,19 +1,29 @@
-# PMM Dual-Runtime Starter Repo
+# PMM — Poor Man's Memory
 
-## Poor Man's Memory (Programmable Memory Management)
+**Structured, git-backed memory for AI coding sessions.**
 
-Clone-and-go PMM runtime bundle for unified memory across OpenCode and Claude Code.
+By Monday you're re-explaining choices you made on Thursday. PMM fixes that. Every session, the AI loads what it already knows — decisions, lessons, preferences, open threads — then adds to it. Flat files. Git-backed. No database, no setup.
 
-## What this is
+- **Decisions tracked with rationale** — not just what, but why
+- **Open threads** — active issues and tasks that persist across context resets
+- **Indexed session timeline** — what changed, what was decided, which files were touched
+- **Lessons and preferences** — mistakes noted, patterns observed, working style remembered
+- **`git log` is your audit trail** — memory that compounds, not rots
 
-This repository gives you one PMM setup that can be used across both runtimes:
+Threads feature concept credited to [FiSimply](https://github.com/FiSimply) via [Clief Notes](https://www.skool.com/quantum-quill-lyceum-1116).
+
+---
+
+## What this repo is
+
+Clone-and-go PMM runtime bundle for unified memory across **OpenCode** and **Claude Code**.
 
 - OpenCode plugin bundle
 - Claude Code plugin via local private marketplace
 
 Use this when you want shared PMM memory behavior across tools without wiring everything manually.
 
-Within each runtime environment, PMM is already capable of cross and multi-session work. Your memory files remain with the project (but your harnesses and runtimes can change).
+Within each runtime, PMM supports cross and multi-session work. Your memory files stay with the project — runtimes and harnesses can change.
 
 ## Prerequisites
 
