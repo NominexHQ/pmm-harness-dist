@@ -82,25 +82,23 @@ claude plugin install pmm@nominex-pmm-harness-marketplace
 claude plugin reload
 ```
 
-### Installation scopes
-
-Claude Code supports installation scope. Pick one that matches how broadly you want PMM available:
+The default scope is `user` (global across all your projects). Use `--scope` to narrow it:
 
 ```bash
-# current project only (recommended default)
+# current project only — safest starting point
 claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
 
-# all projects for your user
+# all projects for your user (CLI default)
 claude plugin install pmm@nominex-pmm-harness-marketplace --scope user
 
-# current local working context only
+# current local working context only — temporary/isolated testing
 claude plugin install pmm@nominex-pmm-harness-marketplace --scope local
 ```
 
 Scope differences:
 
-- `project`: Installed for the current repository/project only. Best for trying PMM safely without affecting other projects.
-- `user`: Installed globally for your user account across projects. Best when PMM is part of your standard setup.
+- `project`: Installed for the current repository only. Safe for trying PMM without affecting other projects.
+- `user`: Installed globally across all your projects. Best when PMM is part of your standard setup. CLI default.
 - `local`: Installed for the current local working context only. Best for temporary or isolated testing.
 
 If you are not in the parent directory, use an absolute path for marketplace registration:
@@ -233,6 +231,39 @@ This matrix is the source of truth for runtime parity status.
 
 - `pmm:onboard`
 - `pmm:init-local-skills`
+
+## Memory files
+
+PMM maintains a `memory/` directory in your project. Each file has a specific role.
+
+`config.md` and `secrets.md` are always active. All others are opt-in via `pmm:settings`.
+
+| File | Purpose |
+| --- | --- |
+| `config.md` | PMM settings — save cadence, model, verbosity, active files, etc. |
+| `secrets.md` | Local-only credentials. Never committed to git. |
+| `memory.md` | Long-term facts about the project — what it is, key context, durable facts |
+| `decisions.md` | Committed decisions with rationale. Append-only. |
+| `lessons.md` | Mistakes and lessons learned. Append-only. |
+| `progress.md` | Current state, completed work, what's in-progress, blockers, next actions |
+| `last.md` | Detail from the last session — replaced each save, not appended |
+| `timeline.md` | Chronological record of sessions and milestones. Sliding window. |
+| `summaries.md` | Periodic rollups of past work. Sliding window. |
+| `threads-open.md` | Active issues and tasks with full detail — status, objectives, checklists |
+| `threads-closed.md` | Archive of completed threads. Append-only. |
+| `assets.md` | Key entities — people, tools, systems, organisations |
+| `processes.md` | Workflows and processes established during the project |
+| `preferences.md` | User-specific style, working habits, and communication preferences |
+| `standinginstructions.md` | Persistent rules that always apply. Append-only. |
+| `voices.md` | Tone profiles and reasoning lenses |
+| `user.md` | Operative user identity — how the user thinks and works. Seeded by `pmm:onboard`. |
+| `graph.md` | Typed relationships between concepts, decisions, entities (Tier 2) |
+| `taxonomies.md` | Classification systems and naming conventions (Tier 2, on-demand) |
+| `vectors.md` | Semantic clusters and embedding registry (Tier 2, on-demand) |
+
+Tier 2 files (`graph.md`, `vectors.md`, `taxonomies.md`, `assets.md`) are loaded on demand rather than injected at session start.
+
+Run `pmm:settings` to configure which files are active and how they load (`full`, `tail:N`, `header`, or `skip`).
 
 ## Known issues
 

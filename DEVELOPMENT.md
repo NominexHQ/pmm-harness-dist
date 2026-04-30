@@ -85,6 +85,9 @@ Workflow:
 
 ## Gotchas we learned
 
+- **If this repo is embedded as a subdirectory inside a larger parent repo (no own `.git`), push with care.**
+  A remote configured on the parent will push the entire parent history. Use `git subtree split` or a dedicated worktree to isolate this directory before pushing to the public remote.
+
 - Marketplace path format matters:
   - `plugins[].source` must be `./...` relative path in local marketplace mode.
   - Example: `./pmm-harness/claudecode/pmm-plugin`
