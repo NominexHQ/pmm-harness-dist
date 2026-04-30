@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "nominex-pmm-harness-marketplace",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "owner": {
     "name": "NominexHQ",
     "email": "hq@nominex.org"

@@ -125,3 +125,16 @@ Then choose one action and proceed:
 
 Do not peek more than 3 files consecutively without doing work between peeks.
 If any metadata collection fails, emit what you have and continue.
+
+## On session start
+
+After memory files are loaded, include a short resume summary before proceeding with regular work.
+
+Summary requirements:
+- Source only from loaded PMM memory files (plus any explicitly requested reads)
+- Prioritize outstanding issues, active projects, and open tasks
+- Keep it concise (about 5-10 lines)
+- Lead with what is currently blocked or in progress
+- End with the top 1-3 next actions
+
+If no open work is found, say so explicitly instead of inferring tasks.
