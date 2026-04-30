@@ -92,6 +92,8 @@ Run `pmm:settings` at any time to change these.
 - vectors.md: active | tail:20
 - taxonomies.md: active
 - standinginstructions.md: active | full
+- threads-open.md: active | full
+- threads-closed.md: active
 
 ## Readonly Agent Model
 
@@ -146,12 +148,14 @@ Run `pmm:settings` at any time to change these.
 - memory.md: tier-1
 - summaries.md: tier-1
 - timeline.md: tier-1
+- threads-open.md: tier-1
 
 ### Tier 2 (on demand)
 - graph.md: tier-2
 - vectors.md: tier-2
 - taxonomies.md: tier-2
 - assets.md: tier-2
+- threads-closed.md: tier-2
 
 ## Memory Priority
 
@@ -219,7 +223,7 @@ Current installation: this project. Upstream: https://github.com/NominexHQ/poor-
 This project uses a structured memory system in the `memory/` folder.
 
 **Tier 1 files** (config, standinginstructions, last, progress, decisions, lessons,
-preferences, memory, summaries, voices, processes, timeline) are injected into context
+preferences, memory, summaries, voices, processes, timeline, threads-open) are injected into context
 by the PMM `SessionStart` hook at session open — always available, no agent needed.
 No CLAUDE.md changes required.
 
@@ -253,7 +257,7 @@ each file with this preamble:
 ### Tier 2 — On Demand
 <!-- These files are active but NOT loaded at session start.
      Use the Read tool to load them when needed for recall or query. -->
-<!-- Available: taxonomies.md, assets.md -->
+<!-- Available: taxonomies.md, assets.md, threads-closed.md -->
 
 ### Routing Table
 When a recall query or operation needs Tier 2 data, Read the relevant file(s):
@@ -261,6 +265,8 @@ When a recall query or operation needs Tier 2 data, Read the relevant file(s):
 - Similarities/clusters → vectors.md
 - Categories/naming → taxonomies.md
 - People/tools/systems → assets.md
+- Active threads/tasks → threads-open.md
+- Archived thread details → threads-closed.md
 
 If `memory/secrets.md` exists, note that secrets are available. Do not echo or summarise its contents.
 
@@ -307,6 +313,9 @@ git add memory/ && git reset HEAD memory/secrets.md 2>/dev/null; git commit -m "
 
 - Never edit this file unless explicitly asked
 - Never delete entries from decisions.md or standinginstructions.md
+- threads-open.md is a living document — update task status in place, check off completed items
+- When a thread completes: move full detail to threads-closed.md (append-only), replace with a one-line summary + reference in threads-open.md
+- threads-closed.md is append-only — never modify past entries
 - timeline.md and summaries.md are sliding windows — see config.md for max entries. Do NOT auto-truncate during maintenance (truncation disabled pending safe commit flow). Files may exceed max — this is expected. Full history is in git
 - Never hallucinate past context — if it's not in the files, say so
 - last.md is always replaced, never appended
@@ -748,4 +757,97 @@ Format: observation → instruction. -->
 ## Background
 
 <!-- Only what changes how the AI operates. Not a biography. -->
+```
+
+---
+
+## threads-open.md
+
+```markdown
+# Threads — Open
+
+Active issues, projects, and tasks. Updated as conversations progress.
+When a thread completes, move its full detail to threads-closed.md and replace with a one-line summary + reference here.
+
+<!-- Format:
+## [Thread title]
+*Status: open | in-progress | blocked*
+*Opened: [date]*
+*Updated: [date]*
+*Planned Completion: [date] (hard commitment | soft commitment)*
+*Blocked by: [Thread title](#thread-title-slug)* <!-- optional -->
+*Depends on: [Thread title](#thread-title-slug)* <!-- optional; multiple allowed -->
+
+### Problem statement
+[What is wrong or needed, why it matters, what triggered this thread]
+
+### Objective(s)
+
+#### Objective 1 (added: [date], updated: [date])
+- Point or sub-objective 1 
+- Point or sub-objective 2
+ - Sub Point
+
+### Success metric(s)
+- Metric 1
+  - Sub Point
+- Metric 2
+  - Method, evaluations
+  - Subjective or objective measures
+
+
+### Summary of the issue or project.
+
+- [ ] Task one (started: [date], estimated completion: [date], updated: [date])
+- [ ] Task two
+  - [ ] Sub-task
+  - [ ] External task or dependency → #[other-thread-slug] (blocking | non-blocking)
+  - [ ] Blocker
+- [ ] Task three (blocked on Task X)
+- [x] Completed task
+- [-] Task in progress
+
+### Notes
+[Context]
+[Notes]
+[Blockers]
+[Resources]
+<!-- paths, URLs, files, git refs, or related memory entries -->
+- [label] : relative/path or /absolute/path
+- [label] : https://... (PR, issue, ticket, doc, API ref)
+- [label] : git remote or repo/branch
+- [label] : memory/[file].md (cross-ref)
+
+When closed: replace all of the above with:
+~~## [Thread title]~~ → Closed [date]. See threads-closed.md#[anchor].
+<!-- Anchor = heading slug: lowercase, spaces→hyphens, punctuation stripped. "## Fix auth bug" → #fix-auth-bug -->
+-->
+
+<!-- Threads go here -->
+```
+
+---
+
+## threads-closed.md
+
+```markdown
+# Threads — Closed
+
+Archive of completed issues and projects. Append-only — never modify past entries.
+Newest at top.
+
+<!-- Format:
+## [Thread title]
+*Closed: [date] | Opened: [date]*
+
+[1-2 sentence outcome summary]
+
+### Checklist
+- [x] Task one
+- [x] Task two
+  - [x] Sub-task
+
+### Notes
+[Decisions made, lessons learned, references worth preserving]
+-->
 ```

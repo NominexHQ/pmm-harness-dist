@@ -182,6 +182,7 @@ emit "$MEMORY_DIR/summaries.md"          "memory/summaries.md"
 emit "$MEMORY_DIR/voices.md"             "memory/voices.md"
 emit "$MEMORY_DIR/processes.md"          "memory/processes.md"
 emit "$MEMORY_DIR/timeline.md"           "memory/timeline.md"
+emit "$MEMORY_DIR/threads-open.md"       "memory/threads-open.md"
 
 # Tier 2 — Relationship Memory (graph + vectors)
 # Loaded with interpretation preamble. Tail strategy only.

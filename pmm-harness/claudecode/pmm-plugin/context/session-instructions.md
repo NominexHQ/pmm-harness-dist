@@ -56,6 +56,8 @@ Context-first: searches loaded Tier 1 files, then Tier 2 on demand, then re-read
 
 `taxonomies.md` and `assets.md` are not loaded at session start. Load them on demand when a request involves categories, naming conventions, or asset references. Read only what's needed.
 
+`threads-closed.md` is not loaded at session start. Load it on demand when a thread reference or archival detail is needed that isn’t covered by threads-open.md.
+
 If `memory/secrets.md` exists, credentials are available there. Do not echo or summarise its contents.
 
 ## Load Strategies

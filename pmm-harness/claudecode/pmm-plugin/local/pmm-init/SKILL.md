@@ -100,6 +100,8 @@ Multi-select from:
 - `vectors.md` — semantic similarities, clusters, embedding registry
 - `taxonomies.md` — classification systems and naming conventions
 - `standinginstructions.md` — persistent rules that always apply, append-only
+- `threads-open.md` — active issues, projects, and tasks (Tier 1)
+- `threads-closed.md` — archive of completed threads, loaded on demand (Tier 2)
 
 *Deactivated files are not created and won't be maintained. You can activate them later with `pmm-settings`.*
 
@@ -208,6 +210,8 @@ Run `pmm-settings` at any time to change these.
 - vectors.md: active
 - taxonomies.md: active
 - standinginstructions.md: active | full
+- threads-open.md: active | full
+- threads-closed.md: active
 <for each file NOT in Q7 active list: "- <file>: inactive">
 
 ## Protected Files

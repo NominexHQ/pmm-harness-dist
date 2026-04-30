@@ -23,17 +23,20 @@ _All skills in this plugin can reference this document._
 | `voices.md` | 1 | Living | Tone profiles, reasoning lenses |
 | `processes.md` | 1 | Living | Workflows and processes |
 | `timeline.md` | 1 | Sliding window (max 50) | Compressed chronological record |
+| `threads-open.md` | 1 | Living | Active issues, projects, and tasks |
 | `graph.md` | 2 | Append-only edges | Typed relationships between concepts |
 | `vectors.md` | 2 | Living clusters, append-only registry | Semantic similarities, embeddings |
 | `taxonomies.md` | 2 | Living | Classification systems, naming conventions |
 | `assets.md` | 2 | Living | People, tools, systems, organisations |
+| `threads-closed.md` | 2 | Append-only archive | Completed threads, full detail preserved |
 | `secrets.md` | Protected | Never committed, never read by agents | Local-only credentials |
 
 ### Tier System
 
-- **Tier 1** (12 files): injected at session start by `SessionStart` hook. Always in context.
-- **Tier 2** (4 files): on disk, loaded on demand. Route: relationships -> graph.md,
-  similarities -> vectors.md, categories -> taxonomies.md, entities -> assets.md.
+- **Tier 1** (13 files): injected at session start by `SessionStart` hook. Always in context.
+- **Tier 2** (5 files): on disk, loaded on demand. Route: relationships -> graph.md,
+  similarities -> vectors.md, categories -> taxonomies.md, entities -> assets.md,
+  archived thread detail -> threads-closed.md.
 - **Tier 3**: custom files via `pmm:memory`. Tracked in `registry.md`.
 
 ### Update Protocol
@@ -78,6 +81,26 @@ Model selection:
 8. PII handling follows repository visibility setting
 9. Memory commits go directly to main
 10. `config.md` is read-only for agents
+
+### Per-File Rules: Threads
+
+#### threads-open.md
+
+- **Living document** — update task status in place; check off completed items; update `*Updated: [date]*` header field each time the thread is touched.
+- **New thread**: add a new `## [Thread title]` entry with full metadata headers, problem statement, objectives, success metrics, and task list.
+- **Status updates**: update `*Status:*` and `*Updated:*` fields; check/uncheck tasks; append to `### Notes` as needed. Never create a new duplicate entry for the same thread.
+- **Cross-thread references**: use `*Blocked by: [Title](#slug)*` / `*Depends on: [Title](#slug)*` in the thread header; use `→ #slug (blocking | non-blocking)` on task lines. Anchor slug = heading lowercased, spaces→hyphens, punctuation stripped.
+- **Thread closure protocol** (perform in this exact order):
+  1. Append the full thread detail to `threads-closed.md` (append-only, newest at top).
+  2. Replace the entire thread entry in threads-open.md with a single closure line:
+     `~~## [Thread title]~~ → Closed [date]. See threads-closed.md#[anchor].`
+  3. Do not delete the closed thread entry — the strikethrough line is the permanent record.
+
+#### threads-closed.md
+
+- **Append-only archive** — newest at top. Never modify or delete past entries.
+- Each entry: `## [Thread title]`, metadata (`Closed:`, `Opened:`), 1-2 sentence outcome summary, `### Checklist` with final task states, `### Notes` with decisions/lessons/refs worth preserving.
+- When archiving from threads-open: copy the full content before replacing the open entry with the closure line.
 
 ---
 

@@ -99,7 +99,7 @@ Use `AskUserQuestion` to present the same questions from Phase 1 of the main ski
 - Allow with warning — hook warns but does not block. **Only use this if you understand the implications: secrets.md contents will be in git history and permanently exposed if pushed to a public remote.**
 
 **Q11: Active files** — Which memory files to activate? (multi-select, config.md always active)
-- memory.md, assets.md, decisions.md, processes.md, preferences.md, voices.md, lessons.md, timeline.md, summaries.md, progress.md, last.md, graph.md, vectors.md, taxonomies.md, standinginstructions.md
+- memory.md, assets.md, decisions.md, processes.md, preferences.md, voices.md, lessons.md, timeline.md, summaries.md, progress.md, last.md, graph.md, vectors.md, taxonomies.md, standinginstructions.md, threads-open.md, threads-closed.md
 
 **Q12: Readonly agent model** — Which model should handle read-only operations (session-start, recall, pmm:query, pmm:dump, pmm:status, pmm:viz)?
 - Haiku (default) — cheapest, ~95% cheaper than Opus. Ideal for mechanical reads.
@@ -126,10 +126,10 @@ Use `AskUserQuestion` to present the same questions from Phase 1 of the main ski
 - Off — suppress the pre-compact save instruction entirely
 
 **Q16: Context tiers** — How should memory files be loaded at session start?
-- Tiered (default) — Tier 1 (12 essential files) injected by SessionStart hook; Tier 2 (4 reference files) read on demand. Saves ~14k tokens vs all-in-context.
+- Tiered (default) — Tier 1 (13 essential files) injected by SessionStart hook; Tier 2 (5 reference files) read on demand. Saves ~14k tokens vs all-in-context.
 - All in context — all active files loaded at session start (pre-v1.8.0 behaviour)
 
-*Explain: Tier 1 (config, standinginstructions, progress, last, preferences, decisions, lessons, processes, voices, memory, summaries, timeline) covers everything needed for session orientation. Tier 2 (graph, vectors, taxonomies, assets) is available on demand via the Read tool when a recall query needs it.*
+*Explain: Tier 1 (config, standinginstructions, progress, last, preferences, decisions, lessons, processes, voices, memory, summaries, timeline, threads-open) covers everything needed for session orientation. Tier 2 (graph, vectors, taxonomies, assets, threads-closed) is available on demand via the Read tool when a recall query needs it.*
 
 **Q17: Memory priority** — How should PMM interact with Claude's built-in auto-memory?
 - PMM first (default) — PMM is the primary memory system; Claude auto-memory kept minimal (skill references and feedback only)
@@ -158,7 +158,7 @@ Format written to `config.md`:
 - decisions.md: active | tail:10
 ```
 
-Missing `| strategy` = `full`. Tier 2 files (`graph.md`, `vectors.md`, `taxonomies.md`, `assets.md`) ignore load strategies — they are never loaded at session start.
+Missing `| strategy` = `full`. Tier 2 files (`graph.md`, `vectors.md`, `taxonomies.md`, `assets.md`, `threads-closed.md`) ignore load strategies — they are never loaded at session start.
 
 *Note: Load strategies only affect what the SessionStart hook injects. `pmm:recall` always loads the full file on demand regardless of the configured strategy.*
 
@@ -170,8 +170,8 @@ If active files changed OR context tier mode changed:
 - Update the tier configuration in `${CLAUDE_PLUGIN_ROOT}/context/session-instructions.md` based on current active files and context tier mode:
   - If `Mode: tiered` (default): Tier 1 active files are injected by the SessionStart hook; Tier 2 active files are listed as on-demand only
   - If `Mode: all-in-context`: all active files are injected by the SessionStart hook
-- Tier 1 files: config, standinginstructions, progress, last, preferences, decisions, lessons, processes, voices
-- Tier 2 files: graph, vectors, taxonomies, timeline, summaries, memory, assets
+- Tier 1 files: config, standinginstructions, progress, last, preferences, decisions, lessons, processes, voices, threads-open
+- Tier 2 files: graph, vectors, taxonomies, timeline, summaries, memory, assets, threads-closed
 - If files were deactivated, do NOT delete them — just remove them from the file list
 - If files were activated that don't exist yet, create them from templates in `${CLAUDE_PLUGIN_ROOT}/references/templates.md`
 - **For each newly activated file**, dispatch Phase 5 (Hydrate) using the prompt from `${CLAUDE_PLUGIN_ROOT}/references/core.md`. This ensures activated files start with synthesized content from existing memory, not empty templates. Commit hydrated files separately: `git add memory/<file> && git commit -m "memory: hydrate <file> from existing context"`

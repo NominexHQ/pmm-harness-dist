@@ -119,6 +119,8 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > - `standinginstructions.md` — append-only, never modify existing entries
 > - `decisions.md` — append-only, newest at top
 > - `lessons.md` — append-only
+> - `threads-open.md` — living document; update task status in place; on thread close: append full detail to threads-closed.md first, then replace open entry with closure line
+> - `threads-closed.md` — append-only; never modify past entries
 >
 > **Decay scoring (if `## Decay (Advanced)` is uncommented in config.md):**
 >
@@ -179,6 +181,8 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > | `vectors.md` | New semantic similarity discovered; cluster formed or revised |
 > | `taxonomies.md` | New category, classification system, or naming convention established |
 > | `standinginstructions.md` | User issues a persistent rule or directive |
+> | `threads-open.md` | New issue or project opened; task status changes; thread completed (replace with summary + reference) |
+> | `threads-closed.md` | Thread completed — append full detail before replacing completed thread from threads-open.md with a summary |
 >
 > Return a one-line summary of what was updated and in which files.
 
@@ -193,8 +197,8 @@ Use the model from `Maintain Agent Model` in config (default: `haiku`).
 Three-tier concurrent dispatch for large installations. Faster but higher per-save cost.
 
 **Tier groupings:**
-- **Tier 1 — Event files** (stateless, no cross-file deps): `last.md`, `timeline.md`, `summaries.md`, `progress.md`
-- **Tier 2 — Content files** (semantic, loosely coupled): `decisions.md`, `lessons.md`, `preferences.md`, `memory.md`, `processes.md`, `voices.md`, `assets.md`, `standinginstructions.md`
+- **Tier 1 — Event files** (stateless, no cross-file deps): `last.md`, `timeline.md`, `summaries.md`, `progress.md`, `threads-open.md`
+- **Tier 2 — Content files** (semantic, loosely coupled): `decisions.md`, `lessons.md`, `preferences.md`, `memory.md`, `processes.md`, `voices.md`, `assets.md`, `standinginstructions.md`, `threads-closed.md`
 - **Tier 3 — Relational files** (depend on Tier 1+2 updated state): `graph.md`, `vectors.md`, `taxonomies.md`
 
 **Dispatch:** Launch Tier 1 and Tier 2 agents **simultaneously** — two separate Agent tool calls in the **same message**. Do NOT use `run_in_background: true` — background agents do not inherit Edit/Write tool permissions.
