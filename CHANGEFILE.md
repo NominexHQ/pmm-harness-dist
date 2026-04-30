@@ -2,7 +2,33 @@
 
 Canonical development progress log for `pmm-harness-dist`.
 
-## 2026-04-21
+## 2026-04-30
+
+### Session Management — threads and indexed timeline (2.9.0, Claude plugin only)
+
+Inspired by [FiSimply](https://github.com/FiSimply) and community discussions on [Clief Notes](https://www.skool.com/quantum-quill-lyceum-1116), this release addresses session continuity gaps when working in Claude Cowork and across context windows.
+
+**Threads support:**
+- Added `threads-open.md` (Tier 1, living doc) — tracks active issues, projects, and tasks across sessions
+- Added `threads-closed.md` (Tier 2, append-only archive) — permanent record of completed threads
+- `session-start.sh`: emits `threads-open.md` at session start
+- `session-instructions.md`: loads `threads-closed.md` on demand
+- `templates.md`: full templates for both files, including 4-type Resources block (paths, URLs, git refs, memory cross-refs)
+- `references/README.md`: inventory, tier counts, routing, and per-file operational rules for threads
+- `init/SKILL.md`, `settings/SKILL.md`: threads files in wizard options and tier counts
+
+**Maintain agent — file + thread tracking:**
+- `save/SKILL.md` Step 4 synthesis now explicitly prompts for: files created or modified, thread lifecycle events (opened/updated/closed)
+- `save/SKILL.md` `threads-open.md` rule changed from passive to active: agent reads it every save, not only when explicitly triggered
+- `timeline.md` trigger updated to cover files created/modified and threads opened/closed
+
+**Indexed timeline entries:**
+- `save/SKILL.md`: `timeline.md` maintain rule now instructs the agent to write a structured session index entry (Worked on / Files / Decisions / Threads sub-items) instead of a flat one-liner
+- `templates.md` `timeline.md` format section: documents two patterns — indexed (session saves) vs flat (single-fact in-session milestones)
+
+_OpenCode plugin update to follow in a subsequent release._
+
+
 
 ### Licensing and hygiene (S157)
 

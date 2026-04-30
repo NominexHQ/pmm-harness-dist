@@ -31,6 +31,23 @@ git clone https://github.com/NominexHQ/pmm-harness-dist.git
 
 From your `<new_project_directory>` containing `pmm-harness-dist` cloned repo:
 
+## Update
+
+When a new version is published, pull the latest and re-register the marketplace:
+
+```bash
+cd pmm-harness-dist && git pull
+```
+
+Then in Claude Code:
+
+```
+/reload-plugins
+/pmm:settings
+```
+
+Run `/pmm:settings` (or `pmm_settings` in OpenCode Cowork) after any update that adds new memory file types — it will prompt you to activate new constructs like `threads-open.md` and `threads-closed.md`.
+
 ## Install for OpenCode
 
 Copy the bundled OpenCode artifacts into your target project's `.opencode` directory:

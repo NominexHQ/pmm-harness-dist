@@ -23,12 +23,12 @@ _All skills in this plugin can reference this document._
 | `voices.md` | 1 | Living | Tone profiles, reasoning lenses |
 | `processes.md` | 1 | Living | Workflows and processes |
 | `timeline.md` | 1 | Sliding window (max 50) | Compressed chronological record |
-| `threads-open.md` | 1 | Living | Active issues, projects, and tasks |
+| `threads-open.md` | 1 | Living | Active issues, projects, and tasks <!-- concept: [FiSimply](https://github.com/FiSimply) via [Clief Notes](https://www.skool.com/quantum-quill-lyceum-1116) --> |
 | `graph.md` | 2 | Append-only edges | Typed relationships between concepts |
 | `vectors.md` | 2 | Living clusters, append-only registry | Semantic similarities, embeddings |
 | `taxonomies.md` | 2 | Living | Classification systems, naming conventions |
 | `assets.md` | 2 | Living | People, tools, systems, organisations |
-| `threads-closed.md` | 2 | Append-only archive | Completed threads, full detail preserved |
+| `threads-closed.md` | 2 | Append-only archive | Completed threads, full detail preserved <!-- concept: [FiSimply](https://github.com/FiSimply) via [Clief Notes](https://www.skool.com/quantum-quill-lyceum-1116) --> |
 | `secrets.md` | Protected | Never committed, never read by agents | Local-only credentials |
 
 ### Tier System
