@@ -518,7 +518,19 @@ Sliding window — max entries configured in config.md. Auto-truncation disabled
 
 ## Format
 
+**Session save** — indexed entry (one per save, always use this at session end):
+```
+**[Date] [SNN]** — [one-line summary] [namespace:name?]
+- Worked on: [topic1], [topic2]
+- Files: `file1`, `file2`
+- Decisions: [brief refs — omit if none]
+- Threads: [opened T-N: title], [closed T-N: title] — omit if none
+```
+
+**Single-fact milestone** — flat format (for in-session events, not session saves):
+```
 **[Date]** — [What happened] [namespace:name?]
+```
 <!-- attribution: [user:name], [agent:name], or [system:process] — who originated this. Optional. -->
 
 ---

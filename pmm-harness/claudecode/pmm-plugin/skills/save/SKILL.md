@@ -74,6 +74,8 @@ Cover:
 - Milestones reached or blockers hit
 - Mistakes made or lessons noted
 - Any standing instructions issued
+- Files created or modified (code, config, docs, memory files — list by name)
+- Thread changes: threads opened, tasks updated, threads closed this session
 
 Be specific. The maintain agent works from this summary — vague input produces vague memory updates.
 
@@ -119,7 +121,7 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > - `standinginstructions.md` — append-only, never modify existing entries
 > - `decisions.md` — append-only, newest at top
 > - `lessons.md` — append-only
-> - `threads-open.md` — living document; update task status in place; on thread close: append full detail to threads-closed.md first, then replace open entry with closure line
+> - `threads-open.md` — living document; **read it every save** to check for task status changes even if not mentioned explicitly in `<what-changed>`; update task status in place; on thread close: append full detail to threads-closed.md first, then replace open entry with closure line
 > - `threads-closed.md` — append-only; never modify past entries
 >
 > **Decay scoring (if `## Decay (Advanced)` is uncommented in config.md):**
@@ -151,7 +153,15 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 >
 > - `graph.md` — append-only edges, use typed relationships per `references/core.md` graph syntax
 > - `vectors.md` — similarities/clusters are living (update in place), embedding registry is append-only
-> - `timeline.md` — append new entries. Never truncate. Sliding window config controls session-start load only.
+> - `timeline.md` — append a **session index entry** per save. Never truncate. Use the indexed format:
+>   ```
+>   **[Date] [SNN]** — [one-line summary] [namespace:name?]
+>   - Worked on: [topic1], [topic2]
+>   - Files: `file1`, `file2`
+>   - Decisions: [brief refs, or omit if none]
+>   - Threads: [opened T-N: title], [closed T-N: title], or omit if none
+>   ```
+>   Omit any sub-item that has nothing to report. Use the flat `**[Date]** — [summary]` format only for single-fact milestones written outside a save cycle.
 > - `summaries.md` — append new summaries. Never truncate. Sliding window config controls session-start load only.
 > - `last.md` — ALWAYS replace entirely with the last 3–5 significant actions. Never append.
 > - All other active files — living documents, update in place
@@ -173,7 +183,7 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > | `preferences.md` | User preference observed or stated; communication pattern noticed |
 > | `voices.md` | New tone profile defined; internal dialogue pattern established or refined |
 > | `lessons.md` | Mistake made or lesson explicitly noted |
-> | `timeline.md` | Major milestone or event worth preserving |
+> | `timeline.md` | Major milestone or event; files created/modified; threads opened or closed |
 > | `summaries.md` | Session end, major milestone, or when creating a batch summary of recent timeline entries |
 > | `progress.md` | State changes — milestone reached, blocker hit, next action shifts |
 > | `last.md` | Always — replace with the last 3–5 significant actions |
