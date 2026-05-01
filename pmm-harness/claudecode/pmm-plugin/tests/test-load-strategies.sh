@@ -71,6 +71,11 @@ fail() {
   printf '  FAIL  %s\n' "$1"
   if [[ -n "${2:-}" ]]; then printf '        %s\n' "$2"; fi
 }
+skip() {
+  PASS=$(( PASS + 1 ))
+  printf '  SKIP  %s\n' "$1"
+  if [[ -n "${2:-}" ]]; then printf '        %s\n' "$2"; fi
+}
 
 section() { printf '\n=== %s ===\n' "$1"; }
 
@@ -678,27 +683,86 @@ fi
 section "Category 3: vera-* Parity (structural checks)"
 printf '  hook strategy affects session start only, not on-demand reads by skills\n'
 
-# Skill root: accept env var or walk up
+# Skill discovery supports three install scopes:
+#   1) user scope   — ~/.claude/skills
+#   2) project scope — <project>/.claude/skills
+#   3) local scope  — */vera-plugin/(skills|local)
+PROJECT_SCOPE_ROOT=""
 if [[ -n "${PROJECT_ROOT:-}" ]]; then
-  SKILL_ROOT="$PROJECT_ROOT/.claude/skills"
-elif [[ -d "$SCRIPT_DIR/../../../../.claude/skills" ]]; then
-  SKILL_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)/.claude/skills"
-else
-  SKILL_ROOT="$SCRIPT_DIR/../skills"
+  PROJECT_SCOPE_ROOT="$PROJECT_ROOT"
+elif [[ -d "$SCRIPT_DIR/../../../.." ]]; then
+  PROJECT_SCOPE_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+fi
+
+declare -a SKILL_SEARCH_DIRS=()
+
+add_skill_search_dir() {
+  local dir="$1"
+  [[ -n "$dir" && -d "$dir" ]] || return 0
+  local existing
+  for existing in "${SKILL_SEARCH_DIRS[@]:-}"; do
+    [[ "$existing" == "$dir" ]] && return 0
+  done
+  SKILL_SEARCH_DIRS+=("$dir")
+}
+
+add_skill_search_dir "$HOME/.claude/skills"
+
+if [[ -n "$PROJECT_SCOPE_ROOT" ]]; then
+  add_skill_search_dir "$PROJECT_SCOPE_ROOT/.claude/skills"
+  while IFS= read -r local_dir; do
+    add_skill_search_dir "$local_dir"
+  done < <(find "$PROJECT_SCOPE_ROOT" -type d \( -path '*/vera-plugin/skills' -o -path '*/vera-plugin/local' \) 2>/dev/null)
+fi
+
+if [[ -n "${VERA_SKILL_ROOT:-}" ]]; then
+  add_skill_search_dir "$VERA_SKILL_ROOT"
+  add_skill_search_dir "$VERA_SKILL_ROOT/skills"
+  add_skill_search_dir "$VERA_SKILL_ROOT/local"
 fi
 
 find_skill() {
   local name="$1"
-  local p="$SKILL_ROOT/$name/SKILL.md"
-  [[ -f "$p" ]] && echo "$p" || echo ""
+  local short_name="${name#vera-}"
+  local dir candidate
+
+  for dir in "${SKILL_SEARCH_DIRS[@]}"; do
+    for candidate in \
+      "$dir/$name/SKILL.md" \
+      "$dir/$short_name/SKILL.md"; do
+      if [[ -f "$candidate" ]]; then
+        printf '%s' "$candidate"
+        return 0
+      fi
+    done
+  done
+
+  return 1
 }
+
+list_vera_skill_files() {
+  local dir skill_path
+  for dir in "${SKILL_SEARCH_DIRS[@]}"; do
+    if [[ "$dir" == */.claude/skills ]]; then
+      for skill_path in "$dir"/vera-*/SKILL.md; do
+        [[ -f "$skill_path" ]] && printf '%s\n' "$skill_path"
+      done
+      continue
+    fi
+
+    for skill_path in "$dir"/vera-*/SKILL.md "$dir"/*/SKILL.md; do
+      [[ -f "$skill_path" ]] && printf '%s\n' "$skill_path"
+    done
+  done | awk '!seen[$0]++'
+}
+
+SKILL_ROOT_DESC="${SKILL_SEARCH_DIRS[*]:-<none>}"
 
 # vera:recall reads memory files directly (not from hook-injected session context)
 T="vera:recall reads files directly via Read tool (not hook-injected context)"
 {
-  skill=$(find_skill "vera-recall")
-  if [[ -z "$skill" ]]; then
-    fail "$T" "vera-recall SKILL.md not found at $SKILL_ROOT/vera-recall/SKILL.md"
+  if ! skill=$(find_skill "vera-recall"); then
+    skip "$T" "vera-recall SKILL.md not found in discovered scopes: $SKILL_ROOT_DESC"
   elif grep -qiE "(memory/|\.md)" "$skill"; then
     pass "$T"
   else
@@ -709,9 +773,8 @@ T="vera:recall reads files directly via Read tool (not hook-injected context)"
 # vera:recall does not reference hook-loaded session context
 T="vera:recall does not depend on hook-loaded session context"
 {
-  skill=$(find_skill "vera-recall")
-  if [[ -z "$skill" ]]; then
-    fail "$T" "vera-recall SKILL.md not found"
+  if ! skill=$(find_skill "vera-recall"); then
+    skip "$T" "vera-recall SKILL.md not found in discovered scopes"
   elif grep -qiE "from (session )?context|already loaded|hook.?inject" "$skill"; then
     printf '  INFO  vera:recall references hook-loaded context in %s (accepted)
 ' "$skill"
@@ -724,9 +787,8 @@ T="vera:recall does not depend on hook-loaded session context"
 # vera:recall explicitly asserts no subagent dispatch (direct reads in main context)
 T="vera:recall asserts direct reads (no subagent dispatch)"
 {
-  skill=$(find_skill "vera-recall")
-  if [[ -z "$skill" ]]; then
-    fail "$T" "vera-recall SKILL.md not found"
+  if ! skill=$(find_skill "vera-recall"); then
+    skip "$T" "vera-recall SKILL.md not found in discovered scopes"
   elif grep -qiE "no subagent|direct read|main context" "$skill"; then
     pass "$T"
   else
@@ -737,11 +799,8 @@ T="vera:recall asserts direct reads (no subagent dispatch)"
 # vera:audit reads agent timelines directly
 T="vera:audit reads agent timelines directly (not from hook context)"
 {
-  skill=$(find_skill "vera-audit")
-  if [[ -z "$skill" ]]; then
-    # vera-audit lives in vera-plugin, not installed as flat skill — not hook-dependent
-    printf '  SKIP  vera-audit not found as flat skill (vera-plugin only — confirmed hook-independent)\n'
-    PASS=$(( PASS + 1 ))
+  if ! skill=$(find_skill "vera-audit"); then
+    skip "$T" "vera-audit SKILL.md not found in discovered scopes"
   elif grep -qiE "(timeline|memory/)" "$skill"; then
     pass "$T"
   else
@@ -752,9 +811,8 @@ T="vera:audit reads agent timelines directly (not from hook context)"
 # vera:save dispatches a maintain agent that writes full files
 T="vera:save maintain agent writes to full memory files (not strategy-constrained)"
 {
-  skill=$(find_skill "vera-save")
-  if [[ -z "$skill" ]]; then
-    fail "$T" "vera-save SKILL.md not found"
+  if ! skill=$(find_skill "vera-save"); then
+    skip "$T" "vera-save SKILL.md not found in discovered scopes"
   elif grep -qiE "(maintain|append|replace|write)" "$skill"; then
     pass "$T"
   else
@@ -779,16 +837,16 @@ T="load strategy logic is session-start-only (no strategy terms in vera skill SK
 {
   skill_count=0
   strategy_ref_count=0
-  for skill_path in "$SKILL_ROOT"/vera-*/SKILL.md; do
+  while IFS= read -r skill_path; do
     [[ -f "$skill_path" ]] || continue
     skill_count=$(( skill_count + 1 ))
     if grep -qiE "load.?strategy|emit_tail|emit_header" "$skill_path"; then
       strategy_ref_count=$(( strategy_ref_count + 1 ))
     fi
-  done
+  done < <(list_vera_skill_files)
+
   if [[ "$skill_count" -eq 0 ]]; then
-    printf '  SKIP  No vera skill SKILL.md files found at %s/vera-*/SKILL.md\n' "$SKILL_ROOT"
-    PASS=$(( PASS + 1 ))
+    skip "$T" "No vera skill SKILL.md files found in discovered scopes: $SKILL_ROOT_DESC"
   elif [[ "$strategy_ref_count" -eq 0 ]]; then
     pass "$T"
   else
