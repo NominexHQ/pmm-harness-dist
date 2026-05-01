@@ -39,6 +39,11 @@ resolve_roster_memory_dir() {
   ' "$roster"
 }
 
+has_vera_memory_marker() {
+  local project_root="$1"
+  [[ -f "$project_root/agents/vera/memory/config.md" ]]
+}
+
 # Project root: accept env var, walk up from script dir, or fall back to synthetic fixtures
 if [[ -n "${PROJECT_ROOT:-}" ]]; then
   REAL_PROJECT_ROOT="$PROJECT_ROOT"
@@ -78,13 +83,15 @@ fi
 
 if [[ -d "$REAL_PROJECT_ROOT/memory" ]]; then
   REAL_MEMORY_DIR="$REAL_PROJECT_ROOT/memory"
+elif has_vera_memory_marker "$REAL_PROJECT_ROOT" && [[ -d "$REAL_PROJECT_ROOT/agents/vera/memory" ]]; then
+  REAL_MEMORY_DIR="$REAL_PROJECT_ROOT/agents/vera/memory"
 else
   roster_memory_rel="$(resolve_roster_memory_dir "$REAL_PROJECT_ROOT" || true)"
   roster_memory_rel="${roster_memory_rel#./}"
   if [[ -n "$roster_memory_rel" && -d "$REAL_PROJECT_ROOT/$roster_memory_rel" ]]; then
     REAL_MEMORY_DIR="$REAL_PROJECT_ROOT/$roster_memory_rel"
   else
-    REAL_MEMORY_DIR="$REAL_PROJECT_ROOT/memory"
+    REAL_MEMORY_DIR=""
   fi
 fi
 

@@ -43,6 +43,11 @@ pmm_path_has_config() {
   [[ -f "$dir/config.md" ]]
 }
 
+pmm_has_vera_memory_marker() {
+  local root="$1"
+  [[ -f "$root/agents/vera/memory/config.md" ]]
+}
+
 pmm_extract_memory_dir_directive() {
   local file_path="$1"
   [[ -f "$file_path" ]] || return 1
@@ -200,7 +205,18 @@ pmm_set_memory_context() {
     fi
   fi
 
-  # 5. Safe default
+  # 5. Vera coordinator fallback when agents/vera memory marker is present
+  if pmm_has_vera_memory_marker "$PMM_WORKSPACE_ROOT"; then
+    resolved="$(pmm_join_path "$PMM_WORKSPACE_ROOT" "agents/vera/memory")"
+    if pmm_path_has_config "$resolved"; then
+      PMM_MEMORY_DIR="$resolved"
+      PMM_MEMORY_SOURCE="vera-default"
+      PMM_MEMORY_LABEL="$(pmm_to_workspace_label "$PMM_WORKSPACE_ROOT" "$PMM_MEMORY_DIR")"
+      return 0
+    fi
+  fi
+
+  # 6. Safe default
   PMM_MEMORY_DIR="$(pmm_join_path "$PMM_WORKSPACE_ROOT" "memory")"
   PMM_MEMORY_SOURCE="default"
   PMM_MEMORY_LABEL="$(pmm_to_workspace_label "$PMM_WORKSPACE_ROOT" "$PMM_MEMORY_DIR")"

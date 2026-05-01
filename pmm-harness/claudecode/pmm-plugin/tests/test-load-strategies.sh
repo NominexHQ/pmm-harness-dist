@@ -15,9 +15,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_SCRIPT="$SCRIPT_DIR/../hooks/scripts/session-start.sh"
 STOP_HOOK_SCRIPT="$SCRIPT_DIR/../hooks/scripts/should-save.sh"
 PATH_RESOLVER_SCRIPT="$SCRIPT_DIR/../hooks/scripts/pmm-paths.sh"
+
+has_vera_memory_marker() {
+  local project_root="$1"
+  [[ -f "$project_root/agents/vera/memory/config.md" ]]
+}
+
 # Memory dir: accept env var, walk up, or create synthetic fixtures
 if [[ -n "${PROJECT_ROOT:-}" ]]; then
-  REAL_MEMORY_DIR="$PROJECT_ROOT/memory"
+  if [[ -d "$PROJECT_ROOT/memory" ]]; then
+    REAL_MEMORY_DIR="$PROJECT_ROOT/memory"
+  elif has_vera_memory_marker "$PROJECT_ROOT" && [[ -d "$PROJECT_ROOT/agents/vera/memory" ]]; then
+    REAL_MEMORY_DIR="$PROJECT_ROOT/agents/vera/memory"
+  else
+    REAL_MEMORY_DIR="$PROJECT_ROOT/memory"
+  fi
 elif [[ -d "$SCRIPT_DIR/../../../../memory" ]]; then
   REAL_MEMORY_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)/memory"
 else
