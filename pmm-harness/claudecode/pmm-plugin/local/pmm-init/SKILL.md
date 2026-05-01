@@ -192,12 +192,12 @@ Run `pmm-settings` at any time to change these.
 <!-- Which memory files are active. Deactivated files are not created or loaded. -->
 <!-- config.md and BOOTSTRAP.md are always active. -->
 <!-- Load Strategy column is optional. Missing = defaults to full. -->
-<!-- Valid strategies: full | tail:N | header | skip -->
+<!-- Valid strategies: full | head:N | tail:N | header | skip -->
 <!-- Tier 2 files (graph, vectors, taxonomies, assets) are not loaded at session start regardless of strategy. -->
 <for each active file, apply default load strategy:>
 - memory.md: active | full
 - assets.md: active
-- decisions.md: active | tail:10
+- decisions.md: active | head:10
 - processes.md: active | full
 - preferences.md: active | full
 - voices.md: active | full

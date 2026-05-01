@@ -6,6 +6,7 @@
 #
 # Load strategies (config.md Active Files section):
 #   full      — cat the whole file (default, backwards compatible)
+#   head:N    — output only the first N entries (entry = line starting with **[ or **Session)
 #   tail:N    — output only the last N entries (entry = line starting with **[ or **Session)
 #   header    — output everything before the second ## heading
 #   skip      — omit this file entirely
@@ -99,6 +100,48 @@ emit_tail() {
   tail -n "+${start_line}" "$path"
 }
 
+# Output first N entries from a file.
+# Entry delimiters: lines starting with **[ or **Session
+emit_head() {
+  local path="$1"
+  local n="$2"
+
+  # Collect line numbers of entry headers.
+  local -a entry_lines=()
+  local lineno=0
+  while IFS= read -r line; do
+    lineno=$(( lineno + 1 ))
+    if [[ "$line" =~ ^\*\*\[ || "$line" =~ ^\*\*Session ]]; then
+      entry_lines+=("$lineno")
+    fi
+  done < "$path"
+
+  local total="${#entry_lines[@]}"
+
+  # head:0 = output nothing.
+  if [[ "$n" -eq 0 ]]; then
+    return 0
+  fi
+
+  if [[ "$total" -eq 0 ]]; then
+    # No entry headers found — fall back to full output.
+    cat "$path"
+    return
+  fi
+
+  if [[ "$n" -ge "$total" ]]; then
+    # Fewer entries than requested — output everything.
+    cat "$path"
+    return
+  fi
+
+  # End at the line right before the (n+1)th entry header.
+  local next_start_line="${entry_lines[$n]}"
+  local end_line=$(( next_start_line - 1 ))
+
+  sed -n "1,${end_line}p" "$path"
+}
+
 # Output everything before the second ## heading.
 emit_header() {
   local path="$1"
@@ -138,8 +181,8 @@ emit() {
     return 0
   fi
 
-  # tail:0 = explicit no-op (suppress header too).
-  if [[ "$strategy" == "tail:0" ]]; then
+  # head:0/tail:0 = explicit no-op (suppress header too).
+  if [[ "$strategy" == "tail:0" || "$strategy" == "head:0" ]]; then
     return 0
   fi
 
@@ -150,7 +193,20 @@ emit() {
     content=$(emit_header "$path")
   elif [[ "$strategy" == tail:* ]]; then
     local n="${strategy#tail:}"
-    content=$(emit_tail "$path" "$n")
+    if [[ "$n" =~ ^[0-9]+$ ]]; then
+      content=$(emit_tail "$path" "$n")
+    else
+      # Invalid numeric argument — fall back to full.
+      content=$(cat "$path")
+    fi
+  elif [[ "$strategy" == head:* ]]; then
+    local n="${strategy#head:}"
+    if [[ "$n" =~ ^[0-9]+$ ]]; then
+      content=$(emit_head "$path" "$n")
+    else
+      # Invalid numeric argument — fall back to full.
+      content=$(cat "$path")
+    fi
   else
     # Unknown strategy — fall back to full.
     content=$(cat "$path")

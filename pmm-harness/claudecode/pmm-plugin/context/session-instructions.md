@@ -66,12 +66,13 @@ The `## Active Files` section of `config.md` supports an optional load strategy 
 
 ```
 - timeline.md: active | tail:5
-- decisions.md: active | tail:10
+- decisions.md: active | head:10
 - memory.md: active | full
 ```
 
 Valid strategies:
 - `full` — load the entire file (default when omitted)
+- `head:N` — load only the first N entries
 - `tail:N` — load only the last N entries (useful for append-only sliding-window files)
 - `header` — load only the file header/frontmatter
 - `skip` — do not load this file at session start (activate for maintain only)

@@ -30,7 +30,7 @@ else
 - standinginstructions.md: active | full
 - last.md: active | full
 - progress.md: active | full
-- decisions.md: active | tail:10
+- decisions.md: active | head:10
 - lessons.md: active | tail:5
 - preferences.md: active | full
 - summaries.md: active | full
@@ -160,6 +160,28 @@ run_emit_header() {
   rm -rf "$work"
 }
 
+# run_emit_head <file> <n>
+# Runs emit_head(file, n) from the hook in an isolated bash subprocess.
+run_emit_head() {
+  local file="$1"
+  local n="$2"
+  local work; work="$TMPDIR_BASE/ehd_$$"
+  mkdir -p "$work/memory"
+  touch "$work/memory/config.md"
+  local hook="$HOOK_SCRIPT"
+  (
+    cd "$work"
+    CLAUDE_PLUGIN_ROOT="/dev/null" \
+      bash --noprofile --norc -c "
+        set -euo pipefail
+        cd '$work'
+        source '$hook'
+        emit_head '$file' '$n'
+      " 2>/dev/null
+  )
+  rm -rf "$work"
+}
+
 # run_get_strategy <filename> <config>
 # Runs get_strategy(filename) from the hook with the given config.md.
 # Suppresses hook's main-body output (config.md emit) by temporarily redirecting
@@ -278,6 +300,19 @@ T="tail:0 outputs nothing"
   fi
 }
 
+# test: head:0 outputs nothing
+T="head:0 outputs nothing"
+{
+  f="$TMPDIR_BASE/t_head0.md"
+  write_timeline_entries "$f" 5
+  out=$(run_emit_head "$f" 0)
+  if [[ -z "$out" ]]; then
+    pass "$T"
+  else
+    fail "$T" "expected empty, got: $(echo "$out" | head -2)"
+  fi
+}
+
 # test: tail:2 outputs full entry content (multi-line), not just headers
 T="tail:2 outputs full multi-line entry content, not just headers"
 {
@@ -302,6 +337,47 @@ EOF
     pass "$T"
   else
     fail "$T" "out: $(echo "$out")"
+  fi
+}
+
+# test: head:2 outputs full entry content (multi-line), not just headers
+T="head:2 outputs full multi-line entry content, not just headers"
+{
+  f="$TMPDIR_BASE/t_head_content.md"
+  cat > "$f" <<'EOF'
+**[Entry 1]** — first
+Content line 1a
+Content line 1b
+
+**[Entry 2]** — second
+Content line 2a
+Content line 2b
+
+**[Entry 3]** — third
+Content line 3a
+Content line 3b
+EOF
+  out=$(run_emit_head "$f" 2)
+  if echo "$out" | grep -q 'Content line 1a' \
+    && echo "$out" | grep -q 'Content line 2b' \
+    && ! echo "$out" | grep -q 'Content line 3a'; then
+    pass "$T"
+  else
+    fail "$T" "out: $(echo "$out")"
+  fi
+}
+
+# test: head:5 on file with 3 entries outputs all 3 (N > total = output all)
+T="head:5 on 3-entry file outputs all 3 entries"
+{
+  f="$TMPDIR_BASE/t_head3.md"
+  write_timeline_entries "$f" 3
+  out=$(run_emit_head "$f" 5)
+  if echo "$out" | grep -q '\[Entry 1\]' \
+    && echo "$out" | grep -q '\[Entry 3\]'; then
+    pass "$T"
+  else
+    fail "$T" "out: $(echo "$out" | head -6)"
   fi
 }
 
@@ -373,11 +449,13 @@ T="empty file produces no output regardless of strategy"
   f="$mdir/timeline.md"
   touch "$f"  # zero bytes
   fail_count=0
-  # tail:0 outputs nothing for any file, so skip that. Test tail:5, full, header.
+  # tail:0/head:0 output nothing for any file, so skip those. Test tail:5, head:5, header.
   for strat in 5 999; do
     out=$(run_emit_tail "$f" "$strat")
     [[ -n "$out" ]] && fail_count=$(( fail_count + 1 ))
   done
+  out=$(run_emit_head "$f" 5)
+  [[ -n "$out" ]] && fail_count=$(( fail_count + 1 ))
   out=$(run_emit_header "$f")
   [[ -n "$out" ]] && fail_count=$(( fail_count + 1 ))
   if [[ "$fail_count" -eq 0 ]]; then
@@ -393,13 +471,13 @@ T="get_strategy parses inline pipe strategy from Active Files"
   cfg="$TMPDIR_BASE/t_parse_config.md"
   write_config "$cfg" \
     "timeline.md: active | tail:5" \
-    "decisions.md: active | tail:10" \
+    "decisions.md: active | head:10" \
     "last.md: active"
   s_timeline=$(run_get_strategy "timeline.md" "$cfg")
   s_decisions=$(run_get_strategy "decisions.md" "$cfg")
   s_last=$(run_get_strategy "last.md" "$cfg")
   if [[ "$s_timeline" == "tail:5" ]] \
-    && [[ "$s_decisions" == "tail:10" ]] \
+    && [[ "$s_decisions" == "head:10" ]] \
     && [[ "$s_last" == "full" ]]; then
     pass "$T"
   else

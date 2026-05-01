@@ -140,8 +140,8 @@ Each memory file has a standard header template. Key patterns:
 - Tier 1: 12 core files loaded by `SessionStart` hook. No CLAUDE.md changes needed.
 - Tier 2: 4 relational files on disk. Loaded via haiku agent when a gap is detected.
   Only load what the request requires, not all four.
-- Load strategies per file in config Active Files section: `full` (default), `tail:N`,
-  `header`, `skip`
+- Load strategies per file in config Active Files section: `full` (default), `head:N`,
+  `tail:N`, `header`, `skip`
 
 ### Syntax References
 

@@ -142,20 +142,21 @@ Use `AskUserQuestion` to present the same questions from Phase 1 of the main ski
 
 Read the current `## Active Files` section from `memory/config.md` and display each active Tier 1 file with its current strategy (or `full` if none set). For each file the user wants to change, accept a new strategy:
 - `full` (default) — load the entire file
+- `head:N` — load only the first N entries
 - `tail:N` — load only the last N lines/entries (recommended for `timeline.md`, `decisions.md`, `lessons.md`)
 - `header` — load only the file header
 - `skip` — exclude from session-start injection (file remains active for maintain; use `pmm:recall` to load on demand)
 
 Suggested defaults if starting fresh:
 - `timeline.md`: tail:5
-- `decisions.md`: tail:10
+- `decisions.md`: head:10
 - `lessons.md`: tail:5
 - All others: full (or omit the column)
 
 Format written to `config.md`:
 ```
 - timeline.md: active | tail:5
-- decisions.md: active | tail:10
+- decisions.md: active | head:10
 ```
 
 Missing `| strategy` = `full`. Tier 2 files (`graph.md`, `vectors.md`, `taxonomies.md`, `assets.md`, `threads-closed.md`) ignore load strategies — they are never loaded at session start.

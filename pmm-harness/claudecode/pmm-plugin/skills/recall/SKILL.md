@@ -47,13 +47,28 @@ Read `memory/config.md`. Extract:
 
 ### Step 2 — Context-first routing
 
-**If `Mode: lazy` AND `bootstrap_wired: true`** — memory files are already in context. Execute Steps 3–4 directly in the main context window without dispatching any agent. Tier 1 files are in-context. For Tier 2 files (graph.md, vectors.md, taxonomies.md, assets.md), use the Read tool to load the relevant file only if the topic likely involves relationships, entities, or classifications.
+**If `Mode: lazy` AND `bootstrap_wired: true`** — memory files are already in context. Execute Steps 3–4 directly in the main context window without dispatching any agent.
+
+Treat `Active Files` in `memory/config.md` as the source of truth for which files are in scope. Respect each file's load strategy (`full`, `head:N`, `tail:N`, `header`, `skip`):
+- `skip`, `head:0`, and `tail:0` are deactivated for session-start recall scope
+- `head:N`, `tail:N`, or `header` may require a targeted Read if deeper detail is needed for synthesis
+
+Tier 2 files are loaded on demand based on topic needs (relationships, entities, classifications, archived thread detail), and only when relevant.
 
 **If `Mode: eager` OR `bootstrap_wired: false`** — fall through to Agent Dispatch at the end of this document.
 
 ### Step 3 — Search across active files
 
-Search all active Tier 1 files for entries related to the topic (case-insensitive keyword match). For each file, collect relevant entries:
+Search config-active files for entries related to the topic (case-insensitive keyword match):
+
+1. Build the search set from `Active Files` in `memory/config.md`:
+   - Include files marked active
+   - Exclude files with strategy `skip`, `head:0`, or `tail:0`
+2. Search all included files already in context
+3. If needed for better synthesis, use targeted Reads for files loaded as `head:N`, `tail:N`, or `header`
+4. Load Tier 2 files only when topic signals indicate they are relevant
+
+Use this role map to guide extraction quality (non-exhaustive, not a hardcoded scope list):
 
 | File | What to look for |
 |------|-----------------|
@@ -68,10 +83,10 @@ Search all active Tier 1 files for entries related to the topic (case-insensitiv
 | `preferences.md` | User preferences relevant to this area |
 | `voices.md` | Tone or reasoning lenses relevant to this area |
 | `summaries.md` | Past session summaries mentioning this topic |
+| `threads-open.md` | Active issues, projects, and task status on this topic |
+| `threads-closed.md` | Archived outcomes and closure context on this topic |
 
-If Tier 2 files might be relevant (topic involves relationships → `graph.md`, entities → `assets.md`, classifications → `taxonomies.md`, semantic clusters → `vectors.md`), read those too via the Read tool.
-
-Skip deactivated files per config.
+For any other active file not listed above, still search it and extract relevant entries.
 
 ### Step 4 — Synthesize briefing
 
@@ -129,10 +144,11 @@ Dispatch a `general-purpose` agent using the `Readonly Agent Model` from `memory
 > ### If topic is provided — Focused Recall
 >
 > 1. Read `<project-root>/memory/config.md` to get active files
-> 2. Read all active Tier 1 `.md` files in `<project-root>/memory/`
-> 3. For Tier 2 files (graph.md, vectors.md, taxonomies.md, assets.md): read only if the topic likely involves relationships, entities, or classifications
-> 4. Search all read files for entries related to the topic (case-insensitive)
-> 5. Synthesize a focused briefing:
+> 2. Build scope from `Active Files` in config (include active, exclude `skip`, `head:0`, and `tail:0`)
+> 3. Read files in scope; for `head:N`, `tail:N`, or `header`, do targeted reads if deeper detail is required
+> 4. Read Tier 2 files only when topic signals indicate relationship/entity/classification/archive relevance
+> 5. Search all read files for entries related to the topic (case-insensitive)
+> 6. Synthesize a focused briefing:
 >
 > ```
 > ## Recall: [topic]
