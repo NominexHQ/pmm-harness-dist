@@ -263,7 +263,7 @@ PMM maintains a `memory/` directory in your project. Each file has a specific ro
 
 Tier 2 files (`graph.md`, `vectors.md`, `taxonomies.md`, `assets.md`) are loaded on demand rather than injected at session start.
 
-Run `pmm:settings` to configure which files are active and how they load (`full`, `tail:N`, `header`, or `skip`).
+Run `pmm:settings` to configure which files are active and how they load (`full`, `head:N`, `tail:N`, `header`, or `skip`).
 
 ## Known issues
 
@@ -296,14 +296,14 @@ This repository packages a unified PMM layer across two independent runtimes (Op
 1. **Edit plugin source** — Make changes to `.opencode/` or upstream `https://github.com/NominexHQ/pmm-plugin`  
 2. **Rebuild snapshots** — `make -C pmm-harness build-opencode build-claudecode`  
 3. **Validate output** — Confirm generated files in `pmm-harness/opencode/` and `pmm-harness/claudecode/pmm-plugin/`  
-4. **Bump version** — `make [-- --patch|--minor|--major]` (bumps marketplace semver)  
+4. **Bump version** — `make [-- --patch|--minor|--major]` (bumps PMM plugin semver and syncs marketplace)  
 5. **Commit & push** — All artifacts are packaged and distributed via git  
 
 **What the build system does:**
 
 - **OpenCode build** — Copies instructional artifacts from workspace `.opencode/` into `pmm-harness/opencode/`
 - **Claude build** — Clones `pmm-plugin` from canonical upstream, strips git metadata, packages as distributable snapshot
-- **Marketplace sync** — Reads Claude plugin version from generated snapshot, updates `.claude-plugin/marketplace.json`
+- **Version bump + marketplace sync** — Bumps Claude plugin semver in the bundled plugin metadata, then updates `.claude-plugin/marketplace.json`
 
 **Component sources of truth:**
 

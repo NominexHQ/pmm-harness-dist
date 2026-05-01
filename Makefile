@@ -22,26 +22,29 @@ endif
 
 .DEFAULT_GOAL := build
 
-.PHONY: help build build-harness bump-marketplace-version --major --minor --patch
+.PHONY: help build build-harness bump-versions bump-marketplace-version --major --minor --patch
 
 help:
 	@echo "Targets:"
-	@echo "  make                Build OpenCode harness, sync plugin version, and bump marketplace patch version"
-	@echo "  make -- --major     Build OpenCode harness, sync plugin version, and bump marketplace major version"
-	@echo "  make -- --minor     Build OpenCode harness, sync plugin version, and bump marketplace minor version"
-	@echo "  make -- --patch     Build OpenCode harness, sync plugin version, and bump marketplace patch version"
+	@echo "  make                Build OpenCode harness, bump plugin patch version, and sync marketplace"
+	@echo "  make -- --major     Build OpenCode harness, bump plugin major version, and sync marketplace"
+	@echo "  make -- --minor     Build OpenCode harness, bump plugin minor version, and sync marketplace"
+	@echo "  make -- --patch     Build OpenCode harness, bump plugin patch version, and sync marketplace"
 	@echo ""
 	@echo "  Claude Code plugin (pmm-harness/claudecode/pmm-plugin/) is canonical — edit directly."
 	@echo "  make help           Show this help text"
 
-build: build-harness bump-marketplace-version
-	@echo "Completed pmm-dist build with $(VERSION_BUMP) marketplace version bump."
+build: build-harness bump-versions
+	@echo "Completed pmm-dist build with $(VERSION_BUMP) plugin version bump and marketplace sync."
 
 build-harness:
 	@$(MAKE) -C "$(HARNESS_DIR)" build-opencode
 
-bump-marketplace-version:
+bump-versions:
 	@python3 "$(CURDIR)/bump_version.py" "$(MARKETPLACE_FILE)" "$(CLAUDECODE_PLUGIN_FILE)" "$(VERSION_BUMP)"
+
+bump-marketplace-version: bump-versions
+	@:
 
 --major: build
 	@:

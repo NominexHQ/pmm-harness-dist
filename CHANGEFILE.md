@@ -49,8 +49,8 @@ _OpenCode plugin update to follow in a subsequent release._
 
 - Added top-level `Makefile` orchestration for:
   - building OpenCode and Claude harness outputs
-  - bumping marketplace semver (`--major`, `--minor`, `--patch`; default patch)
-  - syncing plugin version in marketplace from built Claude plugin metadata
+  - bumping Claude PMM plugin semver (`--major`, `--minor`, `--patch`; default patch)
+  - bumping marketplace semver and syncing marketplace plugin version from bundled Claude plugin metadata
 - Added/maintained harness-level targets in `pmm-harness/Makefile`:
   - `build-opencode`
   - `build-opencode-bash`
