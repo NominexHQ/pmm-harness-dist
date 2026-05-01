@@ -475,7 +475,42 @@ const DEFAULT_INIT_QUESTIONS: QuestionsConfig = {
       "options": [
         { "label": "Essential", "description": "memory.md, decisions.md, progress.md, last.md, timeline.md (Recommended)." },
         { "label": "Full Suite", "description": "All 12 core files (Standard)." },
-        { "label": "Custom", "description": "I will specify files later in config.md." }
+        { "label": "Custom", "description": "I will pick exact files now." }
+      ]
+    },
+    {
+      "header": "Custom File Selection",
+      "question": "If you chose Core Memory: Custom, select the exact files to activate now. If not using Custom, leave unselected.",
+      "options": [
+        { "label": "memory.md", "description": "Core project facts." },
+        { "label": "assets.md", "description": "Artifacts and assets." },
+        { "label": "decisions.md", "description": "Decision log." },
+        { "label": "processes.md", "description": "Workflows and procedures." },
+        { "label": "preferences.md", "description": "Operating preferences." },
+        { "label": "voices.md", "description": "Voice and messaging guidance." },
+        { "label": "lessons.md", "description": "Lessons learned." },
+        { "label": "timeline.md", "description": "Chronological log." },
+        { "label": "summaries.md", "description": "Rolling summaries." },
+        { "label": "progress.md", "description": "Current state and blockers." },
+        { "label": "progress-archive.md", "description": "Archived progress history." },
+        { "label": "last.md", "description": "Last-session handoff." },
+        { "label": "graph.md", "description": "Relationship map." },
+        { "label": "vectors.md", "description": "Semantic map." },
+        { "label": "taxonomies.md", "description": "Classification map." },
+        { "label": "standinginstructions.md", "description": "Standing guardrails." },
+        { "label": "last-parallel.md", "description": "Parallel-session handoff." },
+        { "label": "timeline-parallel.md", "description": "Parallel-session chronology." }
+      ],
+      "multiple": true
+    },
+    {
+      "header": "Sliding Window",
+      "question": "Choose startup window sizes for timeline and summaries.",
+      "options": [
+        { "label": "Window: Light (30/5)", "description": "Smaller session-start footprint." },
+        { "label": "Window: Moderate (50/10)", "description": "Default and recommended balance." },
+        { "label": "Window: Heavy (100/20)", "description": "Load more recent history on startup." },
+        { "label": "Window: Unlimited", "description": "Load full windowed files on startup." }
       ]
     },
     {
@@ -715,6 +750,8 @@ ${systemTweaksInstructions}
             mode,
             projectRoot: root,
             memoryDir,
+            initRequiresQuestionnaire: mode === "INSTALL",
+            initQuestionSet: "INIT_QUESTIONS",
             instructionsOverrideDir: join(root, MEMORY_INSTRUCTIONS_DIR),
             defaultInstructionsDir: join(root, PLUGIN_INSTRUCTIONS_DIR),
             assetsSourceDir: join(root, ".opencode", "plugins", "pmm"),

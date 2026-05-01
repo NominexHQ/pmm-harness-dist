@@ -14,18 +14,21 @@ You MUST act as a single orchestrator using one of these modes:
 
 ### INSTALL mode
 
-1. **Read Templates:** Read the markdown file at `[MEMORY_TEMPLATES_PATH_DEFAULT]` to get content for memory files.
-2. **Scaffold Directories:** Create `memory/` and `config/instructions/` in the project root.
-3. **Write Config:** Create `memory/config.md`. Map the user's choices to the config format.
-4. **Create Memory Files:** For each active file, write its content using the templates.
-5. **Seed Instruction Overrides:** Copy default PMM instruction files from `.opencode/plugins/instructions/` into `config/instructions/`.
-6. **Initialize Root Runtime Files:** Ensure both `AGENTS.md` and `CLAUDE.md` exist at project root using `pmm-template-agent.md` and `pmm-template-claude.md` from the active instruction source.
+1. **Questionnaire Gate (Required):** Run the question flow using `[INIT_QUESTIONS]` and collect answers for every tab before writing any files.
+   - If Core Memory is `Custom`, Custom File Selection must contain at least one file before proceeding.
+   - Sliding Window must be explicitly selected. If no explicit choice is captured, ask a follow-up and stop.
+2. **Read Templates:** Read the markdown file at `[MEMORY_TEMPLATES_PATH_DEFAULT]` to get content for memory files.
+3. **Scaffold Directories:** Create `memory/` and `config/instructions/` in the project root.
+4. **Write Config:** Create `memory/config.md`. Map the user's choices to the config format, including Core Memory profile, Custom File Selection (when used), and Sliding Window selection.
+5. **Create Memory Files:** For each active file, write its content using the templates.
+6. **Seed Instruction Overrides:** Copy default PMM instruction files from `.opencode/plugins/instructions/` into `config/instructions/`.
+7. **Initialize Root Runtime Files:** Ensure both `AGENTS.md` and `CLAUDE.md` exist at project root using `pmm-template-agent.md` and `pmm-template-claude.md` from the active instruction source.
    - If file does not exist: create from template.
    - If file exists: update only the managed system section between `<!-- PMM_SYSTEM_START -->` and `<!-- PMM_SYSTEM_END -->`.
    - If file exists but has no managed markers: prepend the managed system section from template to the top of file and preserve existing content as custom/user section.
-7. **Copy PMM Assets:** Create `{instruction.assetsTargetDir}` if it does not exist. Copy all files from `{instruction.assetsSourceDir}` into it (specifically `pmm-viz-template.html` and `d3.v7.min.js`). Do not overwrite files that already exist.
-8. **Git Integration:** Stage and commit the new/updated `memory/` and root instruction files.
-9. **Success:** Tell the user PMM is ready.
+8. **Copy PMM Assets:** Create `{instruction.assetsTargetDir}` if it does not exist. Copy all files from `{instruction.assetsSourceDir}` into it (specifically `pmm-viz-template.html` and `d3.v7.min.js`). Do not overwrite files that already exist.
+9. **Git Integration:** Stage and commit the new/updated `memory/` and root instruction files.
+10. **Success:** Tell the user PMM is ready.
 
 ### UPDATE mode (MANAGE)
 
