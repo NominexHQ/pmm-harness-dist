@@ -1,5 +1,7 @@
 # Viz Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a VIZ instruction from `pmm_viz`, execute the workflow directly in the main context (no subagent dispatch).
 
 ## Inputs

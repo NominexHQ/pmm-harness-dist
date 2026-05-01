@@ -6,6 +6,8 @@ argument-hint: ""
 
 # PMM Status
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Quick health dashboard for Poor Man's Memory. Runs as a subagent to keep the main context clean.
 
 ## Invocation
@@ -92,7 +94,7 @@ Output the agent's returned string verbatim — it contains the fully formatted 
 > ### Step 7 — Generate warnings
 >
 > Check for:
-> - **Plugin not installed:** Check if `.claude/plugins/pmm/` exists in `<project-root>`. If it does not, add warning: `⚠ PMM plugin not detected — memory may not be auto-loaded at session start. Install the pmm plugin to enable SessionStart hook.`
+> - **Plugin not installed:** Run `claude plugins list` and inspect PMM entries with `claude plugins list | grep -A3 -E '^  ❯ pmm@' | grep -E 'pmm@|Version:|Status:'`. Treat PMM as installed only if at least one `pmm@...` entry has `Status: ✔ enabled`. If no `pmm@` entries are enabled, add warning: `⚠ PMM plugin not detected — memory may not be auto-loaded at session start. Install the pmm plugin to enable SessionStart hook.`
 > - **Template-only active files:** Any active file (per config.md) that is still template-only
 > - **Stale files:** Any file not modified in >7 days (only warn if project has commits in the last 7 days)
 > - **Stale last.md:** `last.md` not updated in the current session (last modified >2 hours ago)

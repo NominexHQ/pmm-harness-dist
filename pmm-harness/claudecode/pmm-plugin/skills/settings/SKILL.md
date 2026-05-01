@@ -6,6 +6,8 @@ argument-hint: ""
 
 # PMM Settings
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Reconfigure the Poor Man's Memory system. This skill presents the same preference prompts used during first-run initialisation, pre-filled with current values.
 
 ## When Triggered
@@ -168,14 +170,12 @@ Missing `| strategy` = `full`. Tier 2 files (`graph.md`, `vectors.md`, `taxonomi
 Update `memory/config.md` with the new values. Preserve the file format from the template.
 
 If active files changed OR context tier mode changed:
-- Update the tier configuration in `${CLAUDE_PLUGIN_ROOT}/context/session-instructions.md` based on current active files and context tier mode:
-  - If `Mode: tiered` (default): Tier 1 active files are injected by the SessionStart hook; Tier 2 active files are listed as on-demand only
-  - If `Mode: all-in-context`: all active files are injected by the SessionStart hook
+- Do NOT edit plugin-space files. Tier behavior is controlled by `memory/config.md` and enforced by runtime hooks.
 - Tier 1 files: config, standinginstructions, progress, last, preferences, decisions, lessons, processes, voices, threads-open
 - Tier 2 files: graph, vectors, taxonomies, timeline, summaries, memory, assets, threads-closed
 - If files were deactivated, do NOT delete them — just remove them from the file list
-- If files were activated that don't exist yet, create them from templates in `${CLAUDE_PLUGIN_ROOT}/references/templates.md`
-- **For each newly activated file**, dispatch Phase 5 (Hydrate) using the prompt from `${CLAUDE_PLUGIN_ROOT}/references/core.md`. This ensures activated files start with synthesized content from existing memory, not empty templates. Commit hydrated files separately: `git add memory/<file> && git commit -m "memory: hydrate <file> from existing context"`
+- If files were activated that don't exist yet, create minimal scaffolds directly in `memory/` (top-level heading + sensible section placeholders).
+- **For each newly activated file**, dispatch `pmm:hydrate <file>` to synthesize real content from existing memory. Commit hydrated files separately: `git add memory/<file> && git commit -m "memory: hydrate <file> from existing context"`
 
 ### Step 4 — Commit
 

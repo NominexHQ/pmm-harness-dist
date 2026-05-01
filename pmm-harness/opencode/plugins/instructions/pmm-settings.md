@@ -1,5 +1,7 @@
 # Settings Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a SETTINGS instruction from `pmm_settings`, you MUST:
 
 1. **Read current config** — Use `instruction.currentSettings` when available, otherwise parse `memory/config.md` directly.
@@ -27,7 +29,7 @@ When you receive a SETTINGS instruction from `pmm_settings`, you MUST:
    - Treat unchanged tabs as intentional keep-current values.
 4. **Ask targeted follow-ups only when needed**:
    - If the user selected a custom window mode, ask for exact timeline/summaries values.
-   - If the user selected `Configure Manually` for load strategy, ask for per-file values using `full`, `tail:N`, `header`, or `skip`.
+   - If the user selected `Configure Manually` for load strategy, ask for per-file values using `full`, `head:N`, `tail:N`, `header`, or `skip`.
    - If the user activated files that are currently missing, note which files will be created from template.
 5. **Update config file** — Write the selected values back to `memory/config.md` while preserving the existing section structure and comments.
 6. **Hydrate newly activated files** — If new files were activated and do not exist yet, create them from templates and offer hydration from existing memory context.

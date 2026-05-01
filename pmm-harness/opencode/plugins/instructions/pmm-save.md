@@ -1,4 +1,7 @@
 [PMM SAVE WORKFLOW]
+
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a SAVE_TO_MEMORY instruction from 'pmm_save', you MUST:
 
 1. **Analyze Content** — Classify into progress, timeline, last, btw, decisions, or lessons.

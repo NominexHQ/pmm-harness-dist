@@ -1,5 +1,7 @@
 # PMM Initialization Plan
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 ## Immediate Action Required: Execute Initialization Plan
 
 Preflight gate:

@@ -1,5 +1,7 @@
 ## Query Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a QUERY instruction from `pmm_query`, you MUST:
 
 1. **Search active files first** - Search across the provided `activeFiles` from config.

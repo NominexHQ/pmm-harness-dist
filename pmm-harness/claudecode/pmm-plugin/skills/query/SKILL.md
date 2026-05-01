@@ -6,6 +6,8 @@ argument-hint: <question or search term>
 
 # pmm:query
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Explicit memory recall. Context-first — answers from already-loaded files before any agent dispatch. Supports free-text questions, attribution filters, date ranges, file scoping, deep traversal, and prose or dump output.
 
 **Query:** $ARGUMENTS
@@ -298,4 +300,4 @@ Output the agent's return value verbatim.
 - Phase 4 Recall in the main session handles implicit recall mid-conversation. This skill is the explicit, filterable version.
 - Model selection follows `Readonly Agent Model` in `memory/config.md` (default: `haiku`). No reasoning required for read-only traversal.
 - Attribution tags (`[user:name]`, `[agent:name]`, `[system:process]`) identify who originated each piece of information. Always preserve and surface them.
-- For the full memory file reference, see `references/core.md`.
+- Runtime scope and file behavior come from `memory/config.md` plus the loaded session instructions.

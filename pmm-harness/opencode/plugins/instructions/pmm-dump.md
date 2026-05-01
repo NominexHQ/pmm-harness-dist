@@ -1,5 +1,7 @@
 # Dump Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a DUMP instruction from `pmm_dump`, you MUST execute the workflow directly in the main context (no subagent dispatch).
 
 1. **Interpret depth level** — Use `instruction.level` (`status`, `summary`, or `detailed`), defaulting to `status` if missing.

@@ -82,8 +82,8 @@
       "question": "Choose how load strategies should be handled for active Tier 1 files. Use manual mode only when you want per-file overrides.",
       "options": [
         { "label": "Keep Current Strategies", "description": "Default. Preserve existing config.md strategies." },
-        { "label": "Use Recommended Strategies", "description": "Recommended. timeline=tail:5, decisions=tail:10, lessons=tail:5, others=full." },
-        { "label": "Configure Manually", "description": "Follow up with per-file values such as full, tail:N, header, or skip." }
+        { "label": "Use Recommended Strategies", "description": "Recommended. timeline=tail:5, decisions=head:10, lessons=tail:5, others=full." },
+        { "label": "Configure Manually", "description": "Follow up with per-file values such as full, head:N, tail:N, header, or skip." }
       ]
     }
   ]

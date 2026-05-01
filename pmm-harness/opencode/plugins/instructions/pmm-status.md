@@ -1,5 +1,7 @@
 ## Status Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a STATUS instruction from `pmm_status`, you MUST:
 
 1. **Check initialization** — Verify `<project-root>/memory/` directory exists and count `.md` files.

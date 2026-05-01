@@ -1,5 +1,7 @@
 ## Recall Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 When you receive a RECALL instruction from 'pmm_recall', you MUST:
 
 1. **Search across active files** - Search all active Tier 1 files for entries related to the topic.

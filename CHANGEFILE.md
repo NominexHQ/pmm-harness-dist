@@ -2,6 +2,32 @@
 
 Canonical development progress log for `pmm-harness-dist`.
 
+## 2026-05-01
+
+### Claude/OpenCode instruction parity hardening (pmm 2.10.0, marketplace 1.1.0)
+
+This pass focused on reducing false negatives and path ambiguity in Claude PMM skill prompts.
+
+**Instruction reliability updates (Claude plugin):**
+- Added explicit path-scope guidance across Claude PMM skills and local mirrors:
+  - `memory/` is treated as `<project-root>/memory/`
+  - `memory/<file>.md` always means `<project-root>/memory/<file>.md`
+- Replaced brittle plugin-detection guidance in `pmm:status`/`pmm-status`:
+  - old pattern: check filesystem path `.claude/plugins/pmm/`
+  - new pattern: run `claude plugins list` and validate at least one enabled `pmm@...` entry
+  - this avoids false warnings in environments where plugin resolution is marketplace/cache-based
+- Removed Claude-plugin-space prompt dependencies in updated skills (for example `${CLAUDE_PLUGIN_ROOT}` and `references/*.md` lookups) in favor of project-local memory-file workflows.
+
+**Parity note (OpenCode):**
+- Canonical OpenCode PMM instructions now include explicit path-scope guidance (`memory/` resolves to `<project-root>/memory/`) to match Claude-side clarity.
+- OpenCode settings guidance and question schema now include `head:N` in load-strategy options for parity with Claude settings behavior.
+- OpenCode still does not use Claude plugin-manager installation checks, so the `claude plugins list` status probe remains Claude-specific and is intentionally not ported.
+
+**Release bump:**
+- Minor bump applied in this pass:
+  - Claude plugin `pmm`: `2.9.4` -> `2.10.0`
+  - Marketplace version: `1.0.18` -> `1.1.0`
+
 ## 2026-04-30
 
 ### Session Management — threads and indexed timeline (2.9.0, Claude plugin only)

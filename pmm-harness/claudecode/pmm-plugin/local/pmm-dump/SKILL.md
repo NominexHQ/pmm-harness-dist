@@ -9,6 +9,8 @@ description: >
 ---
 # PMM Dump
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Render PMM memory state as inline ASCII visualizations. Runs as a subagent to keep the main context clean.
 
 **Depth level:** $ARGUMENTS (default: `status` if empty or not provided)

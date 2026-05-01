@@ -9,6 +9,8 @@ argument-hint: "[extract|interview|refresh]"
 
 # pmm:onboard
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Seed the user identity layer in PMM. Produces `${PMM_MEMORY_ROOT:-memory}/user.md` — a
 structured identity file that tells the AI who it's working with and how to operate.
 
@@ -68,8 +70,9 @@ Tell the user:
 > than me asking you a bunch of questions. Copy the prompt below and paste it into
 > [their AI]. Then paste the output back here and I'll build your identity files from it.
 
-Read `${CLAUDE_PLUGIN_ROOT}/references/onboard-extraction-prompt.md` and present the
-full extraction prompt for the user to copy.
+Present this extraction prompt for the user to copy (do not read plugin-space files):
+
+> "Summarise everything you know about me for migration into a structured identity file. Use concise bullets under: Cognitive Profile, Communication Directives, Tone Defaults, Formatting Defaults, Modes, Principles, Rhythms, Calibration Signals, Anti-patterns, Background Context, and PII (emails, phone numbers, exact locations, private contacts) in a separate section. Include only actionable details that should change AI behaviour."
 
 ### Step 2 — Receive and parse the output
 
@@ -83,9 +86,11 @@ When the user pastes the output back:
 
 ### Step 3 — Generate files
 
-**user.md** — read `${CLAUDE_PLUGIN_ROOT}/references/templates.md` for the `user.md`
-template. Fill each section with operative content only. Every sentence should change
-how the AI behaves — if it's descriptive but not operative, cut it.
+**user.md** — use existing `memory/user.md` structure if present. If missing, create it
+with these sections: Cognitive Profile, Communication (Non-negotiables, Tone defaults,
+Formatting defaults), Modes, Principles, Rhythms, Calibration, Anti-patterns, Background.
+Fill each section with operative content only. Every sentence should change how the AI
+behaves — if it's descriptive but not operative, cut it.
 
 **secrets.md** — append PII entries under appropriate section headers. Do not overwrite
 existing secrets.md content (it may contain credentials).

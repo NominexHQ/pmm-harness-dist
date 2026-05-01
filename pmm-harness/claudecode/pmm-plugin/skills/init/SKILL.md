@@ -6,6 +6,8 @@ argument-hint: [project-name]
 
 # pmm:init
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Initialize Poor Man's Memory in the current project. Runs the preference wizard, scaffolds `memory/`, and configures the plugin hooks.
 
 **When to run:** First time only. If `memory/` already exists, skip to Step 4 (check for config drift).
@@ -226,15 +228,13 @@ Dispatch a `general-purpose` agent using the `Readonly Agent Model` from config 
 
 > Scaffold the memory/ directory for Poor Man's Memory. This is a WRITE task — create files. Do NOT run git commands.
 >
-> 1. Read `references/core.md` for the file inventory and rules.
-> 2. Read `references/templates.md` for the initial content of each file.
-> 3. Read `memory/config.md` to determine which files are active.
-> 4. Create the `memory/` directory if it doesn't exist.
-> 5. Always create `memory/BOOTSTRAP.md` — use the template from `references/templates.md`.
-> 6. `memory/config.md` is already written — skip it.
-> 7. For each file marked `active` in config.md, create it using its template from `references/templates.md`. Skip `inactive` files.
-> 8. Always create `memory/secrets.md` from its template — it is local-only and gitignored regardless of the active files list.
-> 9. Return a confirmation listing: files created, files skipped (inactive), and any errors.
+> 1. Read `memory/config.md` to determine which files are active.
+> 2. Create the `memory/` directory if it doesn't exist.
+> 3. `memory/config.md` is already written — skip it.
+> 4. Ensure `memory/BOOTSTRAP.md` exists. If missing, create it with the standard PMM bootstrap guidance (tier behavior, routing table, and save protocol).
+> 5. For each file marked `active` in config.md, ensure the file exists. If missing, create a minimal scaffold with a top-level heading and sensible section placeholders for that file type.
+> 6. Always create `memory/secrets.md` if missing with local-only handling notes and a simple keys table. It is always gitignored regardless of active file list.
+> 7. Return a confirmation listing: files created, files skipped (inactive), and any errors.
 
 Wait for the agent to return before proceeding.
 
@@ -298,8 +298,7 @@ Tell the user:
 ## Rules
 
 - Never overwrite an existing `memory/` installation. Check first (Step 1).
-- File structure rules and file-by-file operating rules are in `references/core.md` — do not duplicate them here.
-- Templates for each memory file are in `references/templates.md`.
+- Runtime flow must not depend on reading plugin-space references. Use project-local `memory/config.md` and existing `memory/*.md` files as source of truth.
 - Agents edit files only. Main context handles all git commands.
 - `memory/secrets.md` is always created, always gitignored, never committed.
 - The SessionStart hook injects Tier 1 files into context at session start. No CLAUDE.md changes needed.

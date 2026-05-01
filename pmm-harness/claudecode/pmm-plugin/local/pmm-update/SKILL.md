@@ -9,6 +9,8 @@ description: >
 ---
 # PMM Update
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Check the upstream Poor Man's Memory repository for updates and apply them safely. System files (skills, templates, artifacts) are updated; user data (memory/) is never touched.
 
 > **Note on update channels:** The Claude Code Plugin Marketplace handles binary plugin file replacement automatically. `pmm-update` handles *semantic* migration instructions — version-specific steps that go beyond file replacement, such as "v2.1 adds taxonomies.md, run pmm-hydrate after update" or config schema changes that require user action. Run `pmm-update` after a marketplace auto-update to apply any migration steps for the new version.
@@ -132,7 +134,7 @@ If user approves, dispatch a `general-purpose` agent:
 
 ### Phase 4 — Post-update (main context)
 
-1. **Check for new memory file types**: Compare upstream `${CLAUDE_PLUGIN_ROOT}/references/templates.md` to local. If new templates exist and user has `memory/` directory, create new files and trigger Phase 5 (Hydrate) per `${CLAUDE_PLUGIN_ROOT}/references/README.md`.
+1. **Check for missing active memory files**: Read `memory/config.md`. If any file marked active is missing on disk, create a minimal scaffold in `memory/` and trigger Phase 5 (Hydrate) to synthesize content from existing memory.
 
 2. **Reinstall the pre-commit hook** (in case `pmm/hooks/pre-commit` was updated):
    ```bash

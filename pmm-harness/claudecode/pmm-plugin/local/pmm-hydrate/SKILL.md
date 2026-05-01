@@ -8,6 +8,8 @@ description: >
 ---
 # pmm-hydrate
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Populate empty or thin memory files from existing session context and loaded memory. Use when:
 - A new memory file was added (via `pmm-update`) but the `memory/` directory already has populated files
 - A previously deactivated file is re-activated via `pmm-settings`
@@ -86,11 +88,10 @@ One file specified, no `--force`.
    >
    > **Target file:** `memory/<filename>`
    > **Purpose:** `<what this file captures — infer from filename and core.md>`
-   > **Template structure:** Read `${CLAUDE_PLUGIN_ROOT}/references/templates.md` for the correct format for this file type before writing.
+   > **Structure:** Use the current `memory/<filename>` structure if the file exists. If missing, create a minimal scaffold (title + sensible section placeholders) before writing.
    >
    > **Instructions:**
-   > 1. Read `${CLAUDE_PLUGIN_ROOT}/references/templates.md` and locate the template for `<filename>`. Use it as the structural skeleton for your output — follow its format exactly.
-   > 2. Read ALL populated memory files to build context:
+   > 1. Read ALL populated memory files to build context:
    >    - `memory/timeline.md`, `memory/summaries.md` — what happened over time
    >    - `memory/decisions.md` — what was decided and why
    >    - `memory/lessons.md` — what went wrong and what to do instead
@@ -102,12 +103,12 @@ One file specified, no `--force`.
    >    - `memory/graph.md`, `memory/vectors.md` — relationships and similarities
    >    - `memory/last.md`, `memory/progress.md` — recent context
    >    Skip any file that doesn't exist or is template-only — no useful signal there.
-   > 3. Infer content for `memory/<filename>` based on what the existing files reveal.
+   > 2. Infer content for `memory/<filename>` based on what the existing files reveal.
    >    - Do not copy content verbatim — synthesise. Each file has one job.
    >    - Only add entries you can justify from the existing memory. Never hallucinate.
    >    - Use `[system:hydrate]` as the attribution tag for all hydrated entries (applies to decisions.md, timeline.md, lessons.md, standinginstructions.md, last.md).
-   > 4. Write the inferred content to `memory/<filename>`.
-   > 5. Return a brief summary: what was inferred and which source files informed it.
+   > 3. Write the inferred content to `memory/<filename>`.
+   > 4. Return a brief summary: what was inferred and which source files informed it.
 
    Use `Maintain Agent Model` from `memory/config.md` as the agent model. Default: haiku.
 
@@ -144,10 +145,9 @@ Two or more files need hydrating. Use a **single agent** — reads context once,
    > Hydrate multiple memory files from existing memory. This is a WRITE task — edit the target files only. Do NOT run git commands.
    >
    > **Target files:** `<comma-separated list>`
-   > **References directory:** `${CLAUDE_PLUGIN_ROOT}/references/`
    >
    > **Instructions:**
-   > 1. Read `${CLAUDE_PLUGIN_ROOT}/references/templates.md`. For each target file, locate its template section and use it as the structural skeleton.
+   > 1. For each target file: use existing structure if present; if missing, create a minimal scaffold (title + sensible section placeholders).
    > 2. Read ALL populated memory files to build context:
    >    - `memory/timeline.md`, `memory/summaries.md` — what happened over time
    >    - `memory/decisions.md` — what was decided and why
@@ -202,7 +202,7 @@ In force mode, the agent prompt is identical — the distinction is only in whet
 - Background agents (`run_in_background: true`) do not inherit Edit/Write permissions — always dispatch as foreground agents
 - For batch mode, dispatch ONE agent for all targets — do not dispatch one agent per file (reads context once, writes all targets)
 - Only hydrate files marked active in `memory/config.md`
-- If a file does not exist yet, create it from the template in `${CLAUDE_PLUGIN_ROOT}/references/templates.md` before dispatching the hydration agent
+- If a file does not exist yet, create a minimal scaffold in `memory/` before dispatching the hydration agent
 - Hydrate before the first maintain cycle touches a new file — empty files that get maintained stay shallow
 
 ---

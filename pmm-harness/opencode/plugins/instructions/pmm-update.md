@@ -1,5 +1,7 @@
 # Update Workflow
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Check the deployed PMM harness repository for updates and apply them safely. The canonical source is the installed `pmm-harness-dist` git clone itself and its configured remote. System files are updated; user memory content is never touched.
 
 > **Canonical source rule:** In end-user deployment, `pmm-harness-dist/` is the product and its git remote is the upstream source of truth. Do not clone `poor-man-memory` or any other external repo to perform update checks. Use the git repository that contains the deployed harness directory.

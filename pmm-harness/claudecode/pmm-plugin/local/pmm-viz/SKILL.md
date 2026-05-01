@@ -10,6 +10,8 @@ description: >
 ---
 # PMM Viz — Interactive Memory Graph
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Generates an interactive D3.js force-directed graph from all memory files and opens it in the browser. Includes a time slider that lets you scrub through git history to watch the graph evolve. Runs entirely as a subagent to keep the main context clean.
 
 **Scope:** $ARGUMENTS (default: `full` if empty or not provided — shows everything)

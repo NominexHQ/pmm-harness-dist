@@ -6,6 +6,8 @@ argument-hint: "[topic]"
 
 # pmm:recall
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Context-switching primitive. When you're jumping between workstreams or coming back to a topic, `pmm:recall` reads across memory files and synthesizes a focused briefing — not raw search results, but working context you can act on immediately.
 
 **Topic:** $ARGUMENTS

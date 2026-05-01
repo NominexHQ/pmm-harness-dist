@@ -8,6 +8,8 @@ description: >
 ---
 # pmm-save
 
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+
 Saves the current session state to memory. Synthesises what happened, dispatches a maintain agent to update the relevant files, then commits to git.
 
 **Invoked by:** user command (`/pmm-save`), Stop command hook (`should-save.sh` when cadence counter fires), or manual trigger at a milestone.
@@ -25,7 +27,7 @@ Read `memory/config.md`. Extract:
 - `Repository Visibility` — `public` or `private` (controls PII handling)
 - `Decay (Advanced)` — whether decay scoring is enabled for Tier 2 files (default: disabled)
 
-File rules are in `references/core.md`. Don't re-read it on every save — the rules are loaded in context via the plugin's SessionStart hook.
+File rules are defined by `memory/config.md`, this skill, and loaded session instructions. Don't depend on plugin-space reads during save.
 
 ---
 
@@ -151,7 +153,7 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 >
 > *Skip this entire block if `## Decay (Advanced)` is commented out in config.md.*
 >
-> - `graph.md` — append-only edges, use typed relationships per `references/core.md` graph syntax
+> - `graph.md` — append-only edges, use typed relationships consistent with existing `memory/graph.md` syntax
 > - `vectors.md` — similarities/clusters are living (update in place), embedding registry is append-only
 > - `timeline.md` — append new entries. Never truncate. Sliding window config controls session-start load only.
 > - `summaries.md` — append new summaries. Never truncate. Sliding window config controls session-start load only.
