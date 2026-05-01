@@ -1,7 +1,7 @@
 import type { Plugin, ToolContext } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
 import { existsSync, readFileSync, readdirSync } from "fs";
-import { isAbsolute, join } from "path";
+import { dirname, isAbsolute, join, resolve } from "path";
 import { execSync } from "child_process";
 
 // Use the zod instance provided by the host tool to avoid version mismatches
@@ -83,9 +83,29 @@ interface SettingsSummary {
 // HELPER FUNCTIONS
 // ============================================================================
 
+function isFilesystemRoot(pathValue: string): boolean {
+  const resolved = resolve(pathValue);
+  return resolved === dirname(resolved);
+}
+
 function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
-  // Always anchor PMM paths to a stable project root instead of tool/runtime worktree context.
-  return fallbackProjectRoot || context.directory || process.cwd();
+  // Prefer context-provided workspace paths first. Treat filesystem root as last resort.
+  const contextWorktree = (context as ToolContext & { worktree?: string }).worktree;
+  const candidates = [context.directory, contextWorktree, process.cwd(), fallbackProjectRoot]
+    .filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    const resolvedCandidate = resolve(candidate);
+    if (!isFilesystemRoot(resolvedCandidate)) {
+      return resolvedCandidate;
+    }
+  }
+
+  if (candidates.length > 0) {
+    return resolve(candidates[0]);
+  }
+
+  return process.cwd();
 }
 
 function safeRead(path: string): string {
