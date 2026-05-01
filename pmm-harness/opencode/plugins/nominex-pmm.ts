@@ -1,7 +1,7 @@
 import type { Plugin, ToolContext } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
 import { existsSync, readFileSync, readdirSync } from "fs";
-import { join } from "path";
+import { isAbsolute, join } from "path";
 import { execSync } from "child_process";
 
 // Use the zod instance provided by the host tool to avoid version mismatches
@@ -136,6 +136,11 @@ function resolvePmmMemoryDir(root: string): string {
   }
   // 4. Default
   return PMM_MEMORY_DIR_DEFAULT;
+}
+
+function resolvePmmMemoryDirPath(root: string): string {
+  const dir = resolvePmmMemoryDir(root);
+  return isAbsolute(dir) ? dir : join(root, dir);
 }
 
 function resolveInstructionPath(root: string, names: string[], extension: "md" | "json"): string | null {
@@ -704,8 +709,8 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
-          const mode = existsSync(memoryDir) ? "MANAGE" : "INSTALL";
+          const memoryDir = resolvePmmMemoryDirPath(root);
+          const mode = existsSync(join(memoryDir, "config.md")) ? "MANAGE" : "INSTALL";
           return JSON.stringify({
             mode,
             projectRoot: root,
@@ -731,7 +736,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
           const templatesPath = join(root, MEMORY_TEMPLATES_PATH_DEFAULT);
           
           if (!existsSync(memoryDir)) {
@@ -783,7 +788,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
           
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -820,7 +825,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -855,7 +860,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -889,7 +894,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -922,7 +927,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -964,7 +969,7 @@ ${systemTweaksInstructions}
               gitRepoRoot: gitRepoRoot || root,
               localVersion: readLocalVersion(root),
               localVersionPath: join(root, "pmm", "version.json"),
-              memoryInitialized: existsSync(join(root, resolvePmmMemoryDir(root))),
+              memoryInitialized: existsSync(resolvePmmMemoryDirPath(root)),
               gitStatus: validateGit(root)
             }
           });
@@ -978,7 +983,7 @@ ${systemTweaksInstructions}
         },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
 
           if (!existsSync(memoryDir)) {
             return JSON.stringify({
@@ -1011,7 +1016,7 @@ ${systemTweaksInstructions}
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
-          const memoryDir = join(root, resolvePmmMemoryDir(root));
+          const memoryDir = resolvePmmMemoryDirPath(root);
           return JSON.stringify({
             directory: context.directory,
             worktree: context.worktree,

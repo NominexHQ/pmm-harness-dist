@@ -28,6 +28,26 @@ This pass focused on reducing false negatives and path ambiguity in Claude PMM s
   - Claude plugin `pmm`: `2.9.4` -> `2.10.0`
   - Marketplace version: `1.0.18` -> `1.1.0`
 
+### Post-release bugfix: OpenCode false INSTALL mode detection
+
+Addressed a regression where OpenCode PMM could incorrectly report `INSTALL` mode even when PMM was initialized.
+
+**Root cause:**
+- `resolvePmmMemoryDir` can return an absolute path (for example from `pmm_memory_dir` in cwd-scoped `CLAUDE.md`/`AGENTS.md`).
+- Callers then re-prefixed that value with `root` via `join(root, ...)`, yielding malformed paths and missed `memory/config.md` checks.
+
+**Fix shipped:**
+- Added normalized memory-dir path helper using `isAbsolute` guard.
+- Updated PMM tool handlers to use normalized path resolution.
+- Tightened init-mode detection to check `memory/config.md` presence directly (`MANAGE` only when config exists).
+
+**Validation:**
+- OpenCode harness build smoke passed (`make -C pmm-harness-dist/pmm-harness build-opencode`).
+- Claude plugin test suites were re-run and currently fail in this workspace context:
+  - `tests/test-hook-loading.sh`
+  - `tests/test-load-strategies.sh`
+- OpenCode still has no dedicated automated test suite in this repo; current validation is build smoke + runtime-targeted bugfix verification.
+
 ## 2026-04-30
 
 ### Session Management — threads and indexed timeline (2.9.0, Claude plugin only)
