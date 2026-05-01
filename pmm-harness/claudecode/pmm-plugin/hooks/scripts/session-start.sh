@@ -13,7 +13,21 @@
 
 set -euo pipefail
 
-MEMORY_DIR="./memory"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./pmm-paths.sh
+source "$SCRIPT_DIR/pmm-paths.sh"
+
+pmm_set_memory_context "$PWD"
+MEMORY_DIR="$PMM_MEMORY_DIR"
+MEMORY_LABEL_BASE="${PMM_MEMORY_LABEL:-memory}"
+if [[ -z "$MEMORY_LABEL_BASE" || "$MEMORY_LABEL_BASE" == "." ]]; then
+  MEMORY_LABEL_BASE="memory"
+fi
+
+memory_label() {
+  local filename="$1"
+  printf '%s/%s' "$MEMORY_LABEL_BASE" "$filename"
+}
 
 # No memory dir or no valid config = PMM not initialised. Emit marker and exit.
 if [[ ! -d "$MEMORY_DIR" ]] || [[ ! -s "$MEMORY_DIR/config.md" ]]; then
@@ -223,22 +237,22 @@ emit() {
 # Tier 1 files in load order.
 # config.md is always emitted in full — it's the config itself, never in its own Active Files list.
 if [[ -s "$MEMORY_DIR/config.md" ]]; then
-  echo "--- PMM: memory/config.md ---"
+  echo "--- PMM: $(memory_label "config.md") ---"
   cat "$MEMORY_DIR/config.md"
   echo ""
 fi
-emit "$MEMORY_DIR/standinginstructions.md" "memory/standinginstructions.md"
-emit "$MEMORY_DIR/last.md"               "memory/last.md"
-emit "$MEMORY_DIR/progress.md"           "memory/progress.md"
-emit "$MEMORY_DIR/decisions.md"          "memory/decisions.md"
-emit "$MEMORY_DIR/lessons.md"            "memory/lessons.md"
-emit "$MEMORY_DIR/preferences.md"        "memory/preferences.md"
-emit "$MEMORY_DIR/memory.md"             "memory/memory.md"
-emit "$MEMORY_DIR/summaries.md"          "memory/summaries.md"
-emit "$MEMORY_DIR/voices.md"             "memory/voices.md"
-emit "$MEMORY_DIR/processes.md"          "memory/processes.md"
-emit "$MEMORY_DIR/timeline.md"           "memory/timeline.md"
-emit "$MEMORY_DIR/threads-open.md"       "memory/threads-open.md"
+emit "$MEMORY_DIR/standinginstructions.md" "$(memory_label "standinginstructions.md")"
+emit "$MEMORY_DIR/last.md"               "$(memory_label "last.md")"
+emit "$MEMORY_DIR/progress.md"           "$(memory_label "progress.md")"
+emit "$MEMORY_DIR/decisions.md"          "$(memory_label "decisions.md")"
+emit "$MEMORY_DIR/lessons.md"            "$(memory_label "lessons.md")"
+emit "$MEMORY_DIR/preferences.md"        "$(memory_label "preferences.md")"
+emit "$MEMORY_DIR/memory.md"             "$(memory_label "memory.md")"
+emit "$MEMORY_DIR/summaries.md"          "$(memory_label "summaries.md")"
+emit "$MEMORY_DIR/voices.md"             "$(memory_label "voices.md")"
+emit "$MEMORY_DIR/processes.md"          "$(memory_label "processes.md")"
+emit "$MEMORY_DIR/timeline.md"           "$(memory_label "timeline.md")"
+emit "$MEMORY_DIR/threads-open.md"       "$(memory_label "threads-open.md")"
 
 # Tier 2 — Relationship Memory (graph + vectors)
 # Loaded with interpretation preamble. Tail strategy only.
@@ -254,7 +268,7 @@ if is_active "graph.md" && [[ -s "$MEMORY_DIR/graph.md" ]]; then
     echo ""
     TIER2_LOADED=true
   fi
-  emit "$MEMORY_DIR/graph.md" "memory/graph.md"
+    emit "$MEMORY_DIR/graph.md" "$(memory_label "graph.md")"
 fi
 if is_active "vectors.md" && [[ -s "$MEMORY_DIR/vectors.md" ]]; then
   if ! $TIER2_LOADED; then
@@ -267,20 +281,21 @@ if is_active "vectors.md" && [[ -s "$MEMORY_DIR/vectors.md" ]]; then
     echo ""
     TIER2_LOADED=true
   fi
-  emit "$MEMORY_DIR/vectors.md" "memory/vectors.md"
+    emit "$MEMORY_DIR/vectors.md" "$(memory_label "vectors.md")"
 fi
 
 # agents.md is optional — only present in coordinator repos.
 # Bypass is_active check: if it exists and has content, always emit it.
 # Strategy: always full (coordinator file, not user-configurable via Active Files).
 if [[ -s "$MEMORY_DIR/agents.md" ]]; then
-  echo "--- PMM: memory/agents.md ---"
+  echo "--- PMM: $(memory_label "agents.md") ---"
   cat "$MEMORY_DIR/agents.md"
   echo ""
 fi
 
 # Session instructions — always last, always emitted if file exists and has content.
-INSTRUCTIONS="${CLAUDE_PLUGIN_ROOT}/context/session-instructions.md"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+INSTRUCTIONS="$PLUGIN_ROOT/context/session-instructions.md"
 if [[ -s "$INSTRUCTIONS" ]]; then
   echo "--- PMM: session-instructions ---"
   cat "$INSTRUCTIONS"

@@ -5,6 +5,11 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./pmm-paths.sh
+source "$SCRIPT_DIR/pmm-paths.sh"
+pmm_set_memory_context "$PWD"
+
 # --- Read stdin (Claude Code sends JSON to Stop hooks) ---
 STDIN_JSON=""
 if [ -t 0 ]; then
@@ -29,8 +34,8 @@ if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
   exit 0
 fi
 
-# --- Read cadence config from ./memory/config.md ---
-CONFIG_FILE="./memory/config.md"
+# --- Read cadence config from resolved PMM memory directory ---
+CONFIG_FILE="$PMM_MEMORY_DIR/config.md"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   # No config — silent no-op
@@ -62,7 +67,7 @@ fi
 N=$(echo "$CADENCE_MODE" | sed 's/every-//')
 
 # --- Counter logic ---
-COUNTER_FILE="./.pmm-save-counter"
+COUNTER_FILE="$PMM_WORKSPACE_ROOT/.pmm-save-counter"
 
 # Read current count (default 0 if missing or unreadable)
 COUNT=0

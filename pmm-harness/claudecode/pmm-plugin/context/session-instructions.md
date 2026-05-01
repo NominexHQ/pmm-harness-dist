@@ -1,6 +1,6 @@
 # PMM Operating Instructions
 
-PMM (Poor Man's Memory) is a structured, git-backed memory system. Memory files live in `memory/` and are loaded into context at session start. They are the authoritative record of decisions, preferences, lessons, timeline, and project state for this project.
+PMM (Poor Man's Memory) is a structured, git-backed memory system. Memory files live in the resolved PMM memory directory (default `memory/`) and are loaded into context at session start. They are the authoritative record of decisions, preferences, lessons, timeline, and project state for this project.
 
 ## Memory Authority
 
@@ -36,10 +36,10 @@ Check `config.md` for the configured save cadence mode.
 pmm:save
 ```
 
-Dispatches a maintain agent (haiku by default). The agent updates the appropriate memory files. Main context commits to git afterward:
+Dispatches a maintain agent (haiku by default). The agent updates the appropriate memory files. Main context commits to git afterward (replace `<resolved-memory-dir>` with the directory shown in PMM section headers):
 
 ```bash
-git add memory/ && git reset HEAD memory/secrets.md 2>/dev/null; git commit -m "memory: <what changed>"
+git add <resolved-memory-dir>/ && git reset HEAD <resolved-memory-dir>/secrets.md 2>/dev/null; git commit -m "memory: <what changed>"
 ```
 
 ## How to Query
@@ -58,7 +58,7 @@ Context-first: searches loaded Tier 1 files, then Tier 2 on demand, then re-read
 
 `threads-closed.md` is not loaded at session start. Load it on demand when a thread reference or archival detail is needed that isn’t covered by threads-open.md.
 
-If `memory/secrets.md` exists, credentials are available there. Do not echo or summarise its contents.
+If `secrets.md` exists in the resolved PMM memory directory, credentials are available there. Do not echo or summarise its contents.
 
 ## Load Strategies
 
