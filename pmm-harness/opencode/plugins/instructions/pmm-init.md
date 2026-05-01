@@ -1,6 +1,6 @@
 # PMM Initialization Plan
 
-**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
+**Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`. Do not place PMM memory markdown files under `pmm/`.
 
 ## Immediate Action Required: Execute Initialization Plan
 
@@ -19,7 +19,7 @@ You MUST act as a single orchestrator using one of these modes:
 3. **Write Config:** Create `memory/config.md`. Map the user's choices to the config format.
 4. **Create Memory Files:** For each active file, write its content using the templates.
 5. **Seed Instruction Overrides:** Copy default PMM instruction files from `.opencode/plugins/instructions/` into `config/instructions/`.
-6. **Initialize Root Runtime Files:** Ensure both `AGENT.md` and `CLAUDE.md` exist at project root using `pmm-template-agent.md` and `pmm-nd `pmm-template-claude.md` from the active instruction source.
+6. **Initialize Root Runtime Files:** Ensure both `AGENTS.md` and `CLAUDE.md` exist at project root using `pmm-template-agent.md` and `pmm-template-claude.md` from the active instruction source.
    - If file does not exist: create from template.
    - If file exists: update only the managed system section between `<!-- PMM_SYSTEM_START -->` and `<!-- PMM_SYSTEM_END -->`.
    - If file exists but has no managed markers: prepend the managed system section from template to the top of file and preserve existing content as custom/user section.
@@ -47,12 +47,12 @@ You MUST act as a single orchestrator using one of these modes:
    - `pmm-hydrate-questions.json`
    - `pmm-settings-questions.json`
    - `pmm-template-agent.md`
-   - `pmm-pmm-template-claude.md`
-3. **Update Root Runtime Files:** For project-root `AGENT.md` and `CLAUDE.md`, refresh the managed system section.
+   - `pmm-template-claude.md`
+3. **Update Root Runtime Files:** For project-root `AGENTS.md` and `CLAUDE.md`, refresh the managed system section.
    - If file exists with PMM markers: replace only the managed section.
    - If file exists without PMM markers: prepend managed system section.
    - If file is missing: create from template.
-3. **Copy PMM Assets:** Create `{instruction.assetsTargetDir}` if it does not exist. Copy any missing files from `{instruction.assetsSourceDir}` into it (specifically `pmm-viz-template.html` and `d3.v7.min.js`). Do not overwrite files that already exist.
-4. **Preserve User Memory Content:** Do not regenerate user memory content files unless explicitly requested.
-5. **Git Integration:** Stage and commit only files changed by the update.
-6. **Success:** Tell the user instruction defaults were synced into `config/instructions/` and root runtime headers were updated.
+4. **Copy PMM Assets:** Create `{instruction.assetsTargetDir}` if it does not exist. Copy any missing files from `{instruction.assetsSourceDir}` into it (specifically `pmm-viz-template.html` and `d3.v7.min.js`). Do not overwrite files that already exist.
+5. **Preserve User Memory Content:** Do not regenerate user memory content files unless explicitly requested.
+6. **Git Integration:** Stage and commit only files changed by the update.
+7. **Success:** Tell the user instruction defaults were synced into `config/instructions/` and root runtime headers were updated.

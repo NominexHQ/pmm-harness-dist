@@ -705,7 +705,7 @@ ${systemTweaksInstructions}
 
     tool: {
       pmm_init: tool({
-        description: "Checks if PMM is initialized.",
+        description: "Checks PMM initialization state and returns paths only (does not create files).",
         args: {},
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
@@ -714,6 +714,9 @@ ${systemTweaksInstructions}
           return JSON.stringify({
             mode,
             projectRoot: root,
+            memoryDir,
+            instructionsOverrideDir: join(root, MEMORY_INSTRUCTIONS_DIR),
+            defaultInstructionsDir: join(root, PLUGIN_INSTRUCTIONS_DIR),
             assetsSourceDir: join(root, ".opencode", "plugins", "pmm"),
             assetsTargetDir: join(root, "pmm")
           });
