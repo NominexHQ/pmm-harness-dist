@@ -279,7 +279,7 @@ Shows current configuration as a summary, then re-presents all 16 preference que
 
 | Category | Settings |
 |----------|----------|
-| Save behaviour | Save cadence, commit behaviour, auto-push |
+| Save behaviour | Save cadence, commit behaviour, push behaviour |
 | Display | Verbosity, repo visibility |
 | Models | Maintain model, readonly model, maintain strategy |
 | Memory | Active files, context tiers, memory priority, window sizes |
@@ -289,7 +289,7 @@ Shows current configuration as a summary, then re-presents all 16 preference que
 **Use cases**:
 - Switching maintain model from haiku to sonnet for a project with complex domain knowledge
 - Activating `graph.md` and `vectors.md` after 10+ sessions (enough data to be useful)
-- Enabling auto-push for a team repo where others need to see memory updates
+- Setting push behaviour to auto-push or session-end for a team repo where others need to see memory updates
 - Adjusting sliding window size when timeline.md is getting too long
 
 **Example**:
@@ -468,7 +468,7 @@ Tier 1 files (12 core files) auto-load at session start. Tier 2 files (graph, ve
 `pmm:query` understands attribution (`by user:alex`), dates (`since 2026-03-15`), file scope (`in decisions`), and deep traversal (`deep`). It's not just text search — it follows relationships through the graph and finds semantically related content through vector clusters. Use it instead of grepping memory files manually.
 
 **Commit auto, push manual**
-The default (auto-commit, no auto-push) is intentional. Every save creates a git commit — that's your audit trail. But pushing is your choice. Keep memory local until you're ready to share it. If you want auto-push, `pmm:settings` lets you enable it.
+The default (auto-commit, push behaviour: manual) is intentional. Every save creates a git commit — that's your audit trail. But pushing is your choice. Keep memory local until you're ready to share it. If you need automation, `pmm:settings` lets you switch push behaviour to `session-end` or `auto-push`.
 
 **Check status when something feels off**
 `pmm:status` is your diagnostic tool. If Claude seems to have forgotten something, run status first: maybe `last.md` is stale, maybe a file is still template-only, maybe the last save was hours ago. Status shows you what the system actually did, not what you assumed it did.

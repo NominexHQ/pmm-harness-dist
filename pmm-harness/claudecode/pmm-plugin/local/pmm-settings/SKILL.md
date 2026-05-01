@@ -28,7 +28,7 @@ Read `memory/config.md` and display the current settings to the user as a summar
 > **Current PMM settings:**
 > - Save cadence: [current]
 > - Commit behaviour: [current]
-> - Auto-push: [current]
+> - Push behaviour: [current]
 > - Window size: [current preset or custom]
 > - Verbosity: [current]
 > - Repository visibility: [current]
@@ -61,9 +61,12 @@ Use `AskUserQuestion` to present the same questions from Phase 1 of the main ski
 - Batch commits at session end only
 - Manual commits only
 
-**Q3: Auto-push** — Should memory commits be automatically pushed to the remote?
-- Off (default) — commits stay local until you push manually
-- On — git push runs after every memory commit (failures reported, not swallowed)
+**Q3: Push behaviour** — When should memory commits be pushed to remote?
+- Manual (default) — keep commits local until explicitly pushed
+- Session end — push at session end after session-end commit
+- Auto-push — push after each successful auto-commit
+
+*Push and commit are separate controls. Push must not be inferred from remote presence.*
 
 **Q4: Sliding window size** — How many entries to load at session start for timeline.md and summaries.md?
 - Light (30 timeline / 5 summaries)

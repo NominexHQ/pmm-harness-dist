@@ -50,7 +50,16 @@ Options:
 
 *Git commits are your audit trail. Auto-commit means you never lose work.*
 
-**Q3: Sliding window size** — How many entries to load at session start for timeline.md and summaries.md:
+**Q3: Push behaviour** — When should memory commits be pushed to remote?
+
+Options:
+- `manual` (default) — keep commits local until explicitly pushed
+- `session-end` — push at session end after session-end commit
+- `auto-push` — push after each successful auto-commit
+
+*Push and commit are separate controls. Push must not be inferred from remote presence.*
+
+**Q4: Sliding window size** — How many entries to load at session start for timeline.md and summaries.md:
 
 Options:
 - `light` — 30 timeline / 5 summaries
@@ -60,14 +69,14 @@ Options:
 
 *Files are never truncated on disk. The window controls session-start injection only. Git is the full audit trail.*
 
-**Q4: Verbosity** — How should memory updates be communicated?
+**Q5: Verbosity** — How should memory updates be communicated?
 
 Options:
 - `silent` — agent status indicator only
 - `summary` (default) — one-line confirmation after updates
 - `verbose` — full detail of what changed
 
-**Q5: Repository visibility** — Is this repository public or private?
+**Q6: Repository visibility** — Is this repository public or private?
 
 Options:
 - `public` (default) — avoid personal emails, use handles over full names, summarise sensitive decisions without verbatim internal detail
@@ -75,7 +84,7 @@ Options:
 
 *Memory files accumulate names, decisions, and business context. This controls how the maintain agent handles that data.*
 
-**Q6: Maintain agent model** — Which model handles memory updates?
+**Q7: Maintain agent model** — Which model handles memory updates?
 
 Options:
 - `haiku` (default) — fastest and cheapest, good for structured file edits
@@ -84,7 +93,7 @@ Options:
 
 *Maintain work is mechanical (read, append, replace sections). Haiku handles it well at ~10x less cost than Opus.*
 
-**Q7: Active files** — Which memory files do you want? All are active by default.
+**Q8: Active files** — Which memory files do you want? All are active by default.
 
 Multi-select from:
 - `memory.md` — long-term project facts
@@ -107,7 +116,7 @@ Multi-select from:
 
 *Deactivated files are not created and won't be maintained. You can activate them later with `pmm-settings`.*
 
-**Q8: Context tiers** — How should memory files load at session start?
+**Q9: Context tiers** — How should memory files load at session start?
 
 Options:
 - `tiered` (default) — Tier 1 (12 core files) via SessionStart hook; Tier 2 (graph, vectors, taxonomies, assets) read on demand. Saves ~14k tokens per session.
@@ -115,7 +124,7 @@ Options:
 
 *Tier 1 covers everything needed for session orientation. Tier 2 is reference/historical data — loaded on demand when a request needs it.*
 
-**Q9: Memory priority** — How should PMM interact with Claude's built-in auto-memory?
+**Q10: Memory priority** — How should PMM interact with Claude's built-in auto-memory?
 
 Options:
 - `pmm-first` (default) — PMM is the source of truth; Claude auto-memory kept minimal (skill references and feedback only)
@@ -144,22 +153,26 @@ Run `pmm-settings` at any time to change these.
 
 - Mode: <Q2 answer>
 
+## Push Behaviour
+
+- Mode: <Q3 answer>
+
 ## Sliding Window Size
 
-- Timeline max: <from Q3: light=30, moderate=50, heavy=100, unlimited=9999>
-- Summaries max: <from Q3: light=5, moderate=10, heavy=20, unlimited=9999>
+- Timeline max: <from Q4: light=30, moderate=50, heavy=100, unlimited=9999>
+- Summaries max: <from Q4: light=5, moderate=10, heavy=20, unlimited=9999>
 
 ## Verbosity
 
-- Mode: <Q4 answer>
+- Mode: <Q5 answer>
 
 ## Repository Visibility
 
-- Visibility: <Q5 answer>
+- Visibility: <Q6 answer>
 
 ## Maintain Agent Model
 
-- Model: <Q6 answer>
+- Model: <Q7 answer>
 
 ## Readonly Agent Model
 
@@ -179,11 +192,11 @@ Run `pmm-settings` at any time to change these.
 
 ## Context Tiers
 
-- Mode: <Q8 answer>
+- Mode: <Q9 answer>
 
 ## Memory Priority
 
-- Mode: <Q9 answer>
+- Mode: <Q10 answer>
 
 ## Pre-Compact Hook
 
@@ -214,7 +227,7 @@ Run `pmm-settings` at any time to change these.
 - standinginstructions.md: active | full
 - threads-open.md: active | full
 - threads-closed.md: active
-<for each file NOT in Q7 active list: "- <file>: inactive">
+<for each file NOT in Q8 active list: "- <file>: inactive">
 
 ## Protected Files
 
@@ -272,7 +285,7 @@ Tell the user:
 > PMM is initialised. Here's what was set up:
 >
 > - `memory/` scaffolded with <N> files
-> - Config: <save cadence>, <commit behaviour>, <verbosity>
+> - Config: <save cadence>, <commit behaviour>, <push behaviour>, <verbosity>
 > - Active files: <list of active files>
 >
 > **How it works:**

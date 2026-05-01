@@ -14,7 +14,7 @@ PMM (Poor Man's Memory) is a local-first plugin. Your data stays on your machine
 ## Git
 
 - Git commits are local. PMM never pushes to a remote unless you do it yourself.
-- Auto-push is off by default. Your memory stays in your local repo until you explicitly push.
+- Push behaviour defaults to `manual`. Your memory stays in your local repo until you explicitly push.
 
 ## Secrets
 

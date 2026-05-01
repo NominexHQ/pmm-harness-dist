@@ -112,7 +112,7 @@ Model selection:
 |---------|---------|---------|
 | Save Cadence | every-milestone | every-milestone, every-N-messages, on-request |
 | Commit Behaviour | auto-commit | auto-commit, session-end, manual |
-| Push Behaviour | off | on, off |
+| Push Behaviour | manual | manual, session-end, auto-push |
 | Timeline max | 50 | light(30), moderate(50), heavy(100), unlimited |
 | Summaries max | 10 | light(5), moderate(10), heavy(20), unlimited |
 | Verbosity | summary | silent, summary, verbose |

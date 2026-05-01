@@ -64,11 +64,12 @@ Run `pmm:settings` at any time to change these.
 
 ## Push Behaviour
 
-<!-- Should memory commits be automatically pushed to the remote? -->
-- Auto-push: off
-<!-- Options: off (default) | on -->
-<!-- off: commits stay local — push manually when ready -->
-<!-- on: git push runs after every memory commit (failures are reported, not swallowed) -->
+<!-- When memory commits should be pushed to the remote. Push policy is separate from commit policy. -->
+- Mode: manual
+<!-- Options: manual (default) | session-end | auto-push -->
+<!-- manual: commits stay local — push explicitly when ready -->
+<!-- session-end: push when session-end commit is executed -->
+<!-- auto-push: push after each successful auto-commit (failures are reported, not swallowed) -->
 
 ## Active Files
 

@@ -22,6 +22,7 @@ Read `memory/config.md`. Extract:
 - `Maintain Agent Model` — model for the maintain agent (default: `haiku`)
 - `Maintain Strategy` — `single` or `tiered` (default: `single`)
 - `Commit Behaviour` — `auto-commit`, `session-end`, or `manual`
+- `Push Behaviour` — `manual`, `session-end`, or `auto-push` (default: `manual`)
 - `Verbosity` — `silent`, `summary`, or `verbose`
 - `Active Files` — which files are currently active
 - `Repository Visibility` — `public` or `private` (controls PII handling)
@@ -232,9 +233,14 @@ Check `Commit Behaviour` from config:
 - `session-end` — skip commit now; soft instruction in session-instructions.md prompts save before goodbye; no blocking hook — best-effort only
 - `manual` — skip commit; user decides when to commit
 
-Check `Auto-push` from config (if present):
-- `on` — after commit: `git push origin main || echo "⚠️  Push failed — changes committed locally but not pushed"`
-- `off` — do not push (default)
+Check `Push Behaviour` from config:
+- `auto-push` — after a successful commit in this step: `git push origin main || echo "⚠️  Push failed — changes committed locally but not pushed"`
+- `session-end` — do not push now; push when session-end commit is executed
+- `manual` — do not push (default)
+
+Backward compatibility: if legacy `Auto-push` is present, map `on` -> `auto-push` and `off` -> `manual`.
+
+Never run push when no commit was created in this step.
 
 Note: memory commits go directly to main — intentional exception to the project's PR workflow. Automated memory saves cannot wait for review.
 
