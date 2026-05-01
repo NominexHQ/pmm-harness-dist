@@ -2,12 +2,15 @@
   "questions": [
     {
       "header": "Storage",
-      "question": "Configure PMM storage and commit behavior.",
+      "question": "Configure PMM storage, commit behaviour, and push behaviour.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Update memory at key events (default)." },
         { "label": "Save: Every 5 Messages", "description": "Frequent automatic updates (not recommended - may result in high token usage)." },
         { "label": "Commit: Auto-commit", "description": "Commit changes to git after every save (default)." },
-        { "label": "Commit: Manual", "description": "You decide when to commit (tell the LLM to pmm_save)." }
+        { "label": "Commit: Manual", "description": "You decide when to commit (tell the LLM to pmm_save)." },
+        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
+        { "label": "Push: Session End", "description": "Push commits at session end." },
+        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
       ],
       "multiple": true
     },

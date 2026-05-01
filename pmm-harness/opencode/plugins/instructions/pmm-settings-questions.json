@@ -2,14 +2,17 @@
   "questions": [
     {
       "header": "Save",
-      "question": "Choose save cadence and commit behaviour. Default and recommended choices are marked in the option descriptions.",
+      "question": "Choose save cadence, commit behaviour, and push behaviour. Default and recommended choices are marked in the option descriptions.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Default and recommended. Update at decisions, milestones, and session breaks." },
         { "label": "Save: Every 5 Messages", "description": "More frequent updates with higher token cost." },
         { "label": "Save: On Request Only", "description": "Only save when explicitly asked." },
         { "label": "Commit: Auto-commit", "description": "Default and recommended. Commit every update batch automatically." },
         { "label": "Commit: Session End", "description": "Batch commits at session end." },
-        { "label": "Commit: Manual", "description": "Do not commit automatically." }
+        { "label": "Commit: Manual", "description": "Do not commit automatically." },
+        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
+        { "label": "Push: Session End", "description": "Push commits at session end." },
+        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
       ],
       "multiple": true
     },

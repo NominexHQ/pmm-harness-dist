@@ -66,6 +66,7 @@ interface QuestionsConfig {
 interface SettingsSummary {
   saveCadence: string;
   commitBehaviour: string;
+  pushBehaviour: string;
   slidingWindow: string;
   verbosity: string;
   maintainModel: string;
@@ -308,6 +309,7 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
   return {
     saveCadence: extractConfigValue(configContent, "Save Cadence", "Mode"),
     commitBehaviour: extractConfigValue(configContent, "Commit Behaviour", "Mode"),
+    pushBehaviour: extractConfigValue(configContent, "Push Behaviour", "Mode"),
     slidingWindow: formatSlidingWindowSummary(configContent),
     verbosity: extractConfigValue(configContent, "Verbosity", "Mode"),
     maintainModel: extractConfigValue(configContent, "Maintain Agent Model", "Model"),
@@ -460,12 +462,15 @@ const DEFAULT_INIT_QUESTIONS: QuestionsConfig = {
   "questions": [
     {
       "header": "Storage",
-      "question": "Configure PMM storage and commit behavior.",
+      "question": "Configure PMM storage, commit behaviour, and push behaviour.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Update memory at key events (Default)." },
         { "label": "Save: Every 5 Messages", "description": "Frequent automatic updates." },
         { "label": "Commit: Auto-commit", "description": "Commit changes to git after every save (Default)." },
-        { "label": "Commit: Manual", "description": "You decide when to commit." }
+        { "label": "Commit: Manual", "description": "You decide when to commit." },
+        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
+        { "label": "Push: Session End", "description": "Push commits at session end." },
+        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
       ],
       "multiple": true
     },
@@ -562,14 +567,17 @@ const DEFAULT_SETTINGS_QUESTIONS: QuestionsConfig = {
   "questions": [
     {
       "header": "Save",
-      "question": "Choose save cadence and commit behaviour. Keep the default path unless you need a different operational profile.",
+      "question": "Choose save cadence, commit behaviour, and push behaviour. Keep the default path unless you need a different operational profile.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Default and recommended. Update at decisions, milestones, and session breaks." },
         { "label": "Save: Every 5 Messages", "description": "More frequent updates with higher token cost." },
         { "label": "Save: On Request Only", "description": "Only save when explicitly asked." },
         { "label": "Commit: Auto-commit", "description": "Default and recommended. Commit every update batch automatically." },
         { "label": "Commit: Session End", "description": "Batch commits at session end." },
-        { "label": "Commit: Manual", "description": "Do not commit automatically." }
+        { "label": "Commit: Manual", "description": "Do not commit automatically." },
+        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
+        { "label": "Push: Session End", "description": "Push commits at session end." },
+        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
       ],
       "multiple": true
     },
@@ -769,7 +777,7 @@ ${systemTweaksInstructions}
       }),
       
       pmm_save: tool({
-        description: "Saves content to PMM memory files. Routes to appropriate files based on content type and active memory configuration. Automatically git commits if configured.",
+        description: "Saves content to PMM memory files. Routes to appropriate files based on content type and active memory configuration. Git commit and push are controlled separately by config.",
         args: {
           content: z.string().describe("What to record in memory."),
           context: z.string().optional().describe("Additional context for the save.")
@@ -787,10 +795,13 @@ ${systemTweaksInstructions}
           }
           
           let activeFiles: string[] = [];
+          let currentSettings: SettingsSummary | null = null;
           const configPath = join(memoryDir, "config.md");
           if (existsSync(configPath)) {
             try {
-              activeFiles = parseActiveFiles(readFileSync(configPath, "utf-8"));
+              const configContent = readFileSync(configPath, "utf-8");
+              activeFiles = parseActiveFiles(configContent);
+              currentSettings = parseSettingsSummary(configContent);
             } catch (e) {}
           }
           
@@ -815,6 +826,7 @@ ${systemTweaksInstructions}
               userContext: args.context || null,
               activeFiles,
               templates,
+              currentSettings,
               gitStatus
             }
           });

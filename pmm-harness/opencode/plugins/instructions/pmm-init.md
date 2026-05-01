@@ -19,7 +19,7 @@ You MUST act as a single orchestrator using one of these modes:
    - Sliding Window must be explicitly selected. If no explicit choice is captured, ask a follow-up and stop.
 2. **Read Templates:** Read the markdown file at `[MEMORY_TEMPLATES_PATH_DEFAULT]` to get content for memory files.
 3. **Scaffold Directories:** Create `memory/` and `config/instructions/` in the project root.
-4. **Write Config:** Create `memory/config.md`. Map the user's choices to the config format, including Core Memory profile, Custom File Selection (when used), and Sliding Window selection.
+4. **Write Config:** Create `memory/config.md`. Map the user's choices to the config format, including Core Memory profile, Custom File Selection (when used), Sliding Window selection, Commit Behaviour, and Push Behaviour.
 5. **Create Memory Files:** For each active file, write its content using the templates.
 6. **Seed Instruction Overrides:** Copy default PMM instruction files from `.opencode/plugins/instructions/` into `config/instructions/`.
 7. **Initialize Root Runtime Files:** Ensure both `AGENTS.md` and `CLAUDE.md` exist at project root using `pmm-template-agent.md` and `pmm-template-claude.md` from the active instruction source.
