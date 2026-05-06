@@ -1,7 +1,7 @@
 import type { Plugin, ToolContext } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
 import { existsSync, readFileSync, readdirSync } from "fs";
-import { dirname, isAbsolute, join, resolve } from "path";
+import { isAbsolute, join } from "path";
 import { execSync } from "child_process";
 
 // Use the zod instance provided by the host tool to avoid version mismatches
@@ -66,7 +66,6 @@ interface QuestionsConfig {
 interface SettingsSummary {
   saveCadence: string;
   commitBehaviour: string;
-  pushBehaviour: string;
   slidingWindow: string;
   verbosity: string;
   maintainModel: string;
@@ -83,29 +82,9 @@ interface SettingsSummary {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function isFilesystemRoot(pathValue: string): boolean {
-  const resolved = resolve(pathValue);
-  return resolved === dirname(resolved);
-}
-
 function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
-  // Prefer context-provided workspace paths first. Treat filesystem root as last resort.
-  const contextWorktree = (context as ToolContext & { worktree?: string }).worktree;
-  const candidates = [context.directory, contextWorktree, process.cwd(), fallbackProjectRoot]
-    .filter((value): value is string => Boolean(value));
-
-  for (const candidate of candidates) {
-    const resolvedCandidate = resolve(candidate);
-    if (!isFilesystemRoot(resolvedCandidate)) {
-      return resolvedCandidate;
-    }
-  }
-
-  if (candidates.length > 0) {
-    return resolve(candidates[0]);
-  }
-
-  return process.cwd();
+  // Always anchor PMM paths to a stable project root instead of tool/runtime worktree context.
+  return fallbackProjectRoot || context.directory || process.cwd();
 }
 
 function safeRead(path: string): string {
@@ -316,8 +295,7 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
     "timeline.md",
     "summaries.md",
     "progress.md",
-    "threads-open.md",
-    "threads-closed.md",
+    "progress-archive.md",
     "last.md",
     "graph.md",
     "vectors.md",
@@ -330,7 +308,6 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
   return {
     saveCadence: extractConfigValue(configContent, "Save Cadence", "Mode"),
     commitBehaviour: extractConfigValue(configContent, "Commit Behaviour", "Mode"),
-    pushBehaviour: extractConfigValue(configContent, "Push Behaviour", "Mode"),
     slidingWindow: formatSlidingWindowSummary(configContent),
     verbosity: extractConfigValue(configContent, "Verbosity", "Mode"),
     maintainModel: extractConfigValue(configContent, "Maintain Agent Model", "Model"),
@@ -483,15 +460,12 @@ const DEFAULT_INIT_QUESTIONS: QuestionsConfig = {
   "questions": [
     {
       "header": "Storage",
-      "question": "Configure PMM storage, commit behaviour, and push behaviour.",
+      "question": "Configure PMM storage and commit behavior.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Update memory at key events (Default)." },
         { "label": "Save: Every 5 Messages", "description": "Frequent automatic updates." },
         { "label": "Commit: Auto-commit", "description": "Commit changes to git after every save (Default)." },
-        { "label": "Commit: Manual", "description": "You decide when to commit." },
-        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
-        { "label": "Push: Session End", "description": "Push commits at session end." },
-        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
+        { "label": "Commit: Manual", "description": "You decide when to commit." }
       ],
       "multiple": true
     },
@@ -501,43 +475,7 @@ const DEFAULT_INIT_QUESTIONS: QuestionsConfig = {
       "options": [
         { "label": "Essential", "description": "memory.md, decisions.md, progress.md, last.md, timeline.md (Recommended)." },
         { "label": "Full Suite", "description": "All 12 core files (Standard)." },
-        { "label": "Custom", "description": "I will pick exact files now." }
-      ]
-    },
-    {
-      "header": "Custom File Selection",
-      "question": "If you chose Core Memory: Custom, select the exact files to activate now. If not using Custom, leave unselected.",
-      "options": [
-        { "label": "memory.md", "description": "Core project facts." },
-        { "label": "assets.md", "description": "Artifacts and assets." },
-        { "label": "decisions.md", "description": "Decision log." },
-        { "label": "processes.md", "description": "Workflows and procedures." },
-        { "label": "preferences.md", "description": "Operating preferences." },
-        { "label": "voices.md", "description": "Voice and messaging guidance." },
-        { "label": "lessons.md", "description": "Lessons learned." },
-        { "label": "timeline.md", "description": "Chronological log." },
-        { "label": "summaries.md", "description": "Rolling summaries." },
-        { "label": "progress.md", "description": "Current state and blockers." },
-        { "label": "threads-open.md", "description": "Active issues, projects, and tasks." },
-        { "label": "threads-closed.md", "description": "Archived completed threads." },
-        { "label": "last.md", "description": "Last-session handoff." },
-        { "label": "graph.md", "description": "Relationship map." },
-        { "label": "vectors.md", "description": "Semantic map." },
-        { "label": "taxonomies.md", "description": "Classification map." },
-        { "label": "standinginstructions.md", "description": "Standing guardrails." },
-        { "label": "last-parallel.md", "description": "Parallel-session handoff." },
-        { "label": "timeline-parallel.md", "description": "Parallel-session chronology." }
-      ],
-      "multiple": true
-    },
-    {
-      "header": "Sliding Window",
-      "question": "Choose startup window sizes for timeline and summaries.",
-      "options": [
-        { "label": "Window: Light (30/5)", "description": "Smaller session-start footprint." },
-        { "label": "Window: Moderate (50/10)", "description": "Default and recommended balance." },
-        { "label": "Window: Heavy (100/20)", "description": "Load more recent history on startup." },
-        { "label": "Window: Unlimited", "description": "Load full windowed files on startup." }
+        { "label": "Custom", "description": "I will specify files later in config.md." }
       ]
     },
     {
@@ -589,17 +527,14 @@ const DEFAULT_SETTINGS_QUESTIONS: QuestionsConfig = {
   "questions": [
     {
       "header": "Save",
-      "question": "Choose save cadence, commit behaviour, and push behaviour. Keep the default path unless you need a different operational profile.",
+      "question": "Choose save cadence and commit behaviour. Keep the default path unless you need a different operational profile.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Default and recommended. Update at decisions, milestones, and session breaks." },
         { "label": "Save: Every 5 Messages", "description": "More frequent updates with higher token cost." },
         { "label": "Save: On Request Only", "description": "Only save when explicitly asked." },
         { "label": "Commit: Auto-commit", "description": "Default and recommended. Commit every update batch automatically." },
         { "label": "Commit: Session End", "description": "Batch commits at session end." },
-        { "label": "Commit: Manual", "description": "Do not commit automatically." },
-        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
-        { "label": "Push: Session End", "description": "Push commits at session end." },
-        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
+        { "label": "Commit: Manual", "description": "Do not commit automatically." }
       ],
       "multiple": true
     },
@@ -656,8 +591,7 @@ const DEFAULT_SETTINGS_QUESTIONS: QuestionsConfig = {
         { "label": "timeline.md", "description": "Recommended chronology; usually best with a tail strategy." },
         { "label": "summaries.md", "description": "Rolling summary file." },
         { "label": "progress.md", "description": "Recommended current state and blockers." },
-        { "label": "threads-open.md", "description": "Active issues, projects, and tasks." },
-        { "label": "threads-closed.md", "description": "Archived completed threads." },
+        { "label": "progress-archive.md", "description": "Archived progress history." },
         { "label": "last.md", "description": "Recommended handoff file." },
         { "label": "graph.md", "description": "Tier 2 relationship map." },
         { "label": "vectors.md", "description": "Tier 2 semantic map." },
@@ -781,8 +715,6 @@ ${systemTweaksInstructions}
             mode,
             projectRoot: root,
             memoryDir,
-            initRequiresQuestionnaire: mode === "INSTALL",
-            initQuestionSet: "INIT_QUESTIONS",
             instructionsOverrideDir: join(root, MEMORY_INSTRUCTIONS_DIR),
             defaultInstructionsDir: join(root, PLUGIN_INSTRUCTIONS_DIR),
             assetsSourceDir: join(root, ".opencode", "plugins", "pmm"),
@@ -800,7 +732,7 @@ ${systemTweaksInstructions}
       }),
       
       pmm_save: tool({
-        description: "Saves content to PMM memory files. Routes to appropriate files based on content type and active memory configuration. Git commit and push are controlled separately by config.",
+        description: "Saves content to PMM memory files. Routes to appropriate files based on content type and active memory configuration. Automatically git commits if configured.",
         args: {
           content: z.string().describe("What to record in memory."),
           context: z.string().optional().describe("Additional context for the save.")
@@ -818,13 +750,10 @@ ${systemTweaksInstructions}
           }
           
           let activeFiles: string[] = [];
-          let currentSettings: SettingsSummary | null = null;
           const configPath = join(memoryDir, "config.md");
           if (existsSync(configPath)) {
             try {
-              const configContent = readFileSync(configPath, "utf-8");
-              activeFiles = parseActiveFiles(configContent);
-              currentSettings = parseSettingsSummary(configContent);
+              activeFiles = parseActiveFiles(readFileSync(configPath, "utf-8"));
             } catch (e) {}
           }
           
@@ -849,7 +778,6 @@ ${systemTweaksInstructions}
               userContext: args.context || null,
               activeFiles,
               templates,
-              currentSettings,
               gitStatus
             }
           });

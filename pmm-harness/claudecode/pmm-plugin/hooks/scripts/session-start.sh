@@ -234,6 +234,14 @@ emit() {
   fi
 }
 
+# Emit project root and memory directory so the model knows where files are.
+echo "--- PMM: project-root ---"
+echo "$PMM_WORKSPACE_ROOT"
+echo ""
+echo "--- PMM: memory-dir ---"
+echo "$MEMORY_DIR"
+echo ""
+
 # Tier 1 files in load order.
 # config.md is always emitted in full — it's the config itself, never in its own Active Files list.
 if [[ -s "$MEMORY_DIR/config.md" ]]; then

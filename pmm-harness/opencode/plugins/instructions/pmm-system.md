@@ -1,9 +1,7 @@
 <nominex-memory>
 [PMM INIT WORKFLOW]
-- 'pmm_init' returns a JSON payload with a `mode` field (`"INSTALL"` or `"MANAGE"`), plus `projectRoot`, `memoryDir`, `initRequiresQuestionnaire`, `initQuestionSet`, `instructionsOverrideDir`, `defaultInstructionsDir`, `assetsSourceDir`, and `assetsTargetDir`.
+- 'pmm_init' returns a JSON payload with a `mode` field (`"INSTALL"` or `"MANAGE"`), plus `projectRoot`, `memoryDir`, `instructionsOverrideDir`, `defaultInstructionsDir`, `assetsSourceDir`, and `assetsTargetDir`.
 - If `mode` is `'INSTALL'`, you MUST guide the user through the initialization process using the 'question' tool with the following JSON. You MUST present all tabs and get the user's answers before proceeding. After the user confirms, you MUST follow the '[PMM_POST_INIT_INSTRUCTIONS]'.
-- HARD GATE FOR INSTALL: Do not create or modify `memory/`, `memory/config.md`, memory markdown files, root runtime files, or instruction overrides until all INIT_QUESTIONS tabs are answered and the user has confirmed.
-- If any required answer is missing (especially Core Memory, Sliding Window, or Custom File Selection when Core Memory is Custom), ask follow-up questions first and only then continue.
 - If `mode` is `'MANAGE'`, PMM is already initialized. You should acknowledge this and offer to manage settings, perform save/recall/hydrate, or run an instruction sync/update flow via '[PMM_POST_INIT_INSTRUCTIONS]'.
 
 [PMM HYDRATE WORKFLOW]

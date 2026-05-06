@@ -10,7 +10,6 @@ When you receive a SETTINGS instruction from `pmm_settings`, you MUST:
    > **Current PMM settings:**
    > - Save cadence: [current]
    > - Commit behaviour: [current]
-   > - Push behaviour: [current]
    > - Sliding window: [current]
    > - Verbosity: [current]
    > - Maintain model: [current]
@@ -34,5 +33,5 @@ When you receive a SETTINGS instruction from `pmm_settings`, you MUST:
    - If the user activated files that are currently missing, note which files will be created from template.
 5. **Update config file** — Write the selected values back to `memory/config.md` while preserving the existing section structure and comments.
 6. **Hydrate newly activated files** — If new files were activated and do not exist yet, create them from templates and offer hydration from existing memory context.
-7. **Git actions based on separate policies** — If `instruction.gitStatus.canCommit=true`, stage and commit `memory/config.md` with `memory: update PMM configuration`; push only when `Push Behaviour` is configured to auto/session-end and conditions are met. Do not infer push from remote presence alone.
+7. **Commit changes when git is available** — If `instruction.gitStatus.canCommit=true`, stage and commit `memory/config.md` with `memory: update PMM configuration`.
 8. **Confirm result** — Report which settings changed, which files were activated or deactivated, and whether any hydration follow-up is still recommended.

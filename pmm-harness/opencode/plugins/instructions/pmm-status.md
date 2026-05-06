@@ -5,7 +5,7 @@
 When you receive a STATUS instruction from `pmm_status`, you MUST:
 
 1. **Check initialization** — Verify `<project-root>/memory/` directory exists and count `.md` files.
-2. **Read config** — Extract Save cadence, Commit behaviour, Push behaviour, and Maintain agent model from `memory/config.md`.
+2. **Read config** — Extract Save cadence, Commit behaviour, and Maintain agent model from `memory/config.md`.
 3. **Get timestamps** — Run `git log -1 --format="%ar|%ai" -- memory/` for last save.
 4. **Build memory activity table + heatmap** — Include **all** memory `.md` files and sort by activity (most recently updated first).
 

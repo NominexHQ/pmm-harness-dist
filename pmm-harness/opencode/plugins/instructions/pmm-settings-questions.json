@@ -2,17 +2,14 @@
   "questions": [
     {
       "header": "Save",
-      "question": "Choose save cadence, commit behaviour, and push behaviour. Default and recommended choices are marked in the option descriptions.",
+      "question": "Choose save cadence and commit behaviour. Default and recommended choices are marked in the option descriptions.",
       "options": [
         { "label": "Save: Every Milestone", "description": "Default and recommended. Update at decisions, milestones, and session breaks." },
         { "label": "Save: Every 5 Messages", "description": "More frequent updates with higher token cost." },
         { "label": "Save: On Request Only", "description": "Only save when explicitly asked." },
         { "label": "Commit: Auto-commit", "description": "Default and recommended. Commit every update batch automatically." },
         { "label": "Commit: Session End", "description": "Batch commits at session end." },
-        { "label": "Commit: Manual", "description": "Do not commit automatically." },
-        { "label": "Push: Manual", "description": "Default and recommended. Push only when explicitly requested." },
-        { "label": "Push: Session End", "description": "Push commits at session end." },
-        { "label": "Push: Auto-push", "description": "Push after each successful auto-commit." }
+        { "label": "Commit: Manual", "description": "Do not commit automatically." }
       ],
       "multiple": true
     },
@@ -69,8 +66,7 @@
         { "label": "timeline.md", "description": "Recommended chronology; usually best with a tail strategy." },
         { "label": "summaries.md", "description": "Rolling summary file." },
         { "label": "progress.md", "description": "Recommended current state and blockers." },
-        { "label": "threads-open.md", "description": "Active issues, projects, and tasks." },
-        { "label": "threads-closed.md", "description": "Archived completed threads." },
+        { "label": "progress-archive.md", "description": "Archived progress history." },
         { "label": "last.md", "description": "Recommended handoff file." },
         { "label": "graph.md", "description": "Tier 2 relationship map." },
         { "label": "vectors.md", "description": "Tier 2 semantic map." },
