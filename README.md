@@ -31,7 +31,9 @@ Within each runtime, PMM supports cross and multi-session work. Your memory file
 - Claude Code CLI (for Claude install path)
 - OpenCode project with a `.opencode` directory (for OpenCode install path)
 
-## Clone
+## User Guide
+
+### 1) Clone
 
 ```bash
 mkdir -p <new_project_directory>
@@ -41,24 +43,7 @@ git clone https://github.com/NominexHQ/pmm-harness-dist.git
 
 From your `<new_project_directory>` containing `pmm-harness-dist` cloned repo:
 
-## Update
-
-When a new version is published, pull the latest and re-register the marketplace:
-
-```bash
-cd pmm-harness-dist && git pull
-```
-
-Then in Claude Code:
-
-```
-/reload-plugins
-/pmm:settings
-```
-
-Run `/pmm:settings` (or `pmm_settings` in OpenCode Cowork) after any update that adds new memory file types — it will prompt you to activate new constructs like `threads-open.md` and `threads-closed.md`.
-
-## Install for OpenCode
+### 2) Install for OpenCode
 
 Copy the bundled OpenCode artifacts into your target project's `.opencode` directory:
 
@@ -74,20 +59,23 @@ OpenCode note:
 - There is a known bug where slash-form commands like `/pmm_*` do not execute reliably.
 - Workaround: invoke commands semantically by typing the underscore command directly, for example `pmm_init` or `pmm_save`.
 
-## Install for Claude Code
+### 3) Install for Claude Code
 
 ```bash
 claude plugin marketplace add ./pmm-harness-dist
-claude plugin install pmm@nominex-pmm-harness-marketplace
+claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
 claude plugin reload
 ```
 
-The default scope is `user` (global across all your projects). Use `--scope` to narrow it:
+Scope options:
+
+- `project`: installed for the current repository only (recommended).
+- `user`: installed globally across your projects.
+- `local`: installed only for the current local working context.
+
+Examples:
 
 ```bash
-# current project only — safest starting point
-claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
-
 # all projects for your user (CLI default)
 claude plugin install pmm@nominex-pmm-harness-marketplace --scope user
 
@@ -95,19 +83,32 @@ claude plugin install pmm@nominex-pmm-harness-marketplace --scope user
 claude plugin install pmm@nominex-pmm-harness-marketplace --scope local
 ```
 
-Scope differences:
-
-- `project`: Installed for the current repository only. Safe for trying PMM without affecting other projects.
-- `user`: Installed globally across all your projects. Best when PMM is part of your standard setup. CLI default.
-- `local`: Installed for the current local working context only. Best for temporary or isolated testing.
-
 If you are not in the parent directory, use an absolute path for marketplace registration:
 
 ```bash
 claude plugin marketplace add /absolute/path/to/pmm-harness-dist
-claude plugin install pmm@nominex-pmm-harness-marketplace
+claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
 claude plugin reload
 ```
+
+### 4) Update existing install
+
+When a new version is published, pull latest changes:
+
+```bash
+cd pmm-harness-dist && git pull
+```
+
+Then in Claude Code:
+
+```
+/reload-plugins
+/pmm:settings
+```
+
+For OpenCode users, restart OpenCode after pulling updates.
+
+Run `/pmm:settings` (or `pmm_settings` in OpenCode Cowork) after any update that adds new memory file types — it will prompt you to activate constructs like `threads-open.md` and `threads-closed.md`.
 
 ## First-time user primer
 
@@ -270,60 +271,9 @@ Run `pmm:settings` to configure which files are active and how they load (`full`
 - **OpenCode slash-form invocation** — `/pmm_*` slash-form commands do not execute reliably in OpenCode. Workaround: invoke by typing the tool name directly, e.g. `pmm_viz`.
 - **Viz template: session list overflow** — the sessions panel in `pmm-viz-template.html` overflows its container height with no scroll. Workaround: resize the browser window. Fix pending (add `overflow-y: auto` to sessions container CSS).
 
-## Developer Overview
+## Maintainers
 
-This repository packages a unified PMM layer across two independent runtimes (OpenCode and Claude Code). Both runtimes implement the same commands and memory behavior but use different plugin architectures.
-
-### Repository structure
-
-- **`pmm-harness/opencode/`** — OpenCode plugin distribution (installable directly into `.opencode/`)  
-  - `plugins/nominex-pmm.ts` — OpenCode plugin implementation
-  - `plugins/instructions/` — OpenCode instruction set
-  - `plugins/pmm/` — Template assets (d3 lib, viz template HTML)
-
-- **`pmm-harness/claudecode/pmm-plugin/`** — Claude Code plugin snapshot (never edit directly)  
-  - Synced from upstream `https://github.com/NominexHQ/pmm-plugin`
-  - Contains vendor-neutral plugin structure and marketplace descriptor
-
-- **`.claude-plugin/marketplace.json`** — Local Claude marketplace descriptor  
-  - Defines available plugins for `claude plugin` commands
-  - Versioning is automated during release builds
-
-### Build & Release Flow
-
-**Workflow from code change to release:**
-
-1. **Edit plugin source** — Make changes to `.opencode/` or upstream `https://github.com/NominexHQ/pmm-plugin`  
-2. **Rebuild snapshots** — `make -C pmm-harness build-opencode build-claudecode`  
-3. **Validate output** — Confirm generated files in `pmm-harness/opencode/` and `pmm-harness/claudecode/pmm-plugin/`  
-4. **Bump version** — `make [-- --patch|--minor|--major]` (bumps PMM plugin semver and syncs marketplace)  
-5. **Commit & push** — All artifacts are packaged and distributed via git  
-
-**What the build system does:**
-
-- **OpenCode build** — Copies instructional artifacts from workspace `.opencode/` into `pmm-harness/opencode/`
-- **Claude build** — Clones `pmm-plugin` from canonical upstream, strips git metadata, packages as distributable snapshot
-- **Version bump + marketplace sync** — Bumps Claude plugin semver in the bundled plugin metadata, then updates `.claude-plugin/marketplace.json`
-
-**Component sources of truth:**
-
-| Component | Source | Location | Status |
-| --- | --- | --- | --- |
-| OpenCode plugin | Workspace `.opencode/` | `pmm-harness/opencode/` | Editable; regenerated on build |
-| Claude plugin | Upstream `NominexHQ/pmm-plugin` | `pmm-harness/claudecode/pmm-plugin/` | Snapshot only; never edit directly |
-| Marketplace | Generated from plugin versions | `.claude-plugin/marketplace.json` | Auto-synced on build |
-
-### Component repositories
-
-**Upstream source repositories:**
-
-- **pmm-plugin** — https://github.com/NominexHQ/pmm-plugin *(archived)*  
-  Former source of truth for Claude plugin implementation. Used for snapshot cloning during builds. Development continues here in pmm-harness-dist.
-
-**Distribution:**
-
-- **pmm-harness-dist** — https://github.com/NominexHQ/pmm-harness-dist  
-  This repository. Ready-to-use packaging for both runtimes. Published as public reference.
+Maintainer-oriented architecture, repository layout, and release workflow are documented in `docs/maintainer.md`.
 
 ## License
 
