@@ -2,6 +2,11 @@
 
 ## Poor Man's Memory
 
+[![Release](https://img.shields.io/github/v/release/NominexHQ/pmm-harness-dist)](https://github.com/NominexHQ/pmm-harness-dist/releases)
+[![License](https://img.shields.io/github/license/NominexHQ/pmm-harness-dist)](https://github.com/NominexHQ/pmm-harness-dist/blob/main/LICENSE.md)
+[![Last Commit](https://img.shields.io/github/last-commit/NominexHQ/pmm-harness-dist)](https://github.com/NominexHQ/pmm-harness-dist/commits/main)
+[![Stars](https://img.shields.io/github/stars/NominexHQ/pmm-harness-dist?style=social)](https://github.com/NominexHQ/pmm-harness-dist/stargazers)
+
 **Structured, git-backed, file-based memory for persistent AI coding sessions.**
 
 By Monday you're re-explaining choices you made on Thursday. PMM fixes that. Every session, the AI loads what it already knows - decisions, lessons, preferences, open threads - then adds to it.
