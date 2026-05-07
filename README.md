@@ -1,8 +1,24 @@
-# PMM — Poor Man's Memory
+# PMM
 
-**Structured, git-backed memory for AI coding sessions.**
+## Poor Man's Memory
 
-By Monday you're re-explaining choices you made on Thursday. PMM fixes that. Every session, the AI loads what it already knows — decisions, lessons, preferences, open threads — then adds to it. Flat files. Git-backed. No database, no setup.
+**Structured, git-backed, file-based memory for persistent AI coding sessions.**
+
+By Monday you're re-explaining choices you made on Thursday. PMM fixes that. Every session, the AI loads what it already knows - decisions, lessons, preferences, open threads - then adds to it.
+
+Persistence in PMM means memory survives context compaction, new sessions, and runtime switches. The same project memory carries across OpenCode, Claude Code CLI, and Claude Cowork-friendly local skills.
+
+Why persistence matters:
+
+- **No repeated re-briefing** - decisions and rationale stay available between sessions.
+- **Continuity across sessions** - active threads and blockers survive context resets.
+- **Cross-app continuity** - memory stays consistent when you switch tools.
+
+Why file-based:
+
+- **Transparent and inspectable** - plain markdown files you can read and edit directly.
+- **Git-native history** - `git log` gives a full audit trail of memory evolution.
+- **Portable and low-friction** - no database, no hosted dependency, repo-local by default.
 
 - **Decisions tracked with rationale** — not just what, but why
 - **Open threads** — active issues and tasks that persist across context resets
