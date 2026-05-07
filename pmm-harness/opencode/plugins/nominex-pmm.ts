@@ -366,6 +366,151 @@ function readLocalVersion(root: string): string {
   }
 }
 
+function toRepoRelativePath(root: string, absolutePath: string): string {
+  if (absolutePath.startsWith(`${root}/`)) {
+    return absolutePath.slice(root.length + 1);
+  }
+  return absolutePath;
+}
+
+function getGitLastModified(root: string, relativePath: string): { relative: string; epoch: number } | null {
+  try {
+    const escaped = relativePath.replaceAll('"', '\\"');
+    const output = execSync(`git log -1 --format=\"%ar|%at\" -- \"${escaped}\"`, { cwd: root, stdio: "pipe" })
+      .toString()
+      .trim();
+    if (!output) return null;
+    const [relative, epochRaw] = output.split("|");
+    const epoch = Number.parseInt(epochRaw ?? "", 10);
+    if (!Number.isFinite(epoch)) return null;
+    return { relative: relative || "unknown", epoch };
+  } catch {
+    return null;
+  }
+}
+
+function estimateTokens(chars: number): number {
+  return Math.max(0, Math.ceil(chars / 4));
+}
+
+function buildStatusReport(root: string, memoryDir: string, activeFiles: string[]): string {
+  const files = existsSync(memoryDir)
+    ? readdirSync(memoryDir).filter((file) => file.endsWith(".md")).sort()
+    : [];
+
+  const now = Math.floor(Date.now() / 1000);
+  const activeSet = new Set(activeFiles);
+  let totalChars = 0;
+
+  const rows = files.map((file) => {
+    const absolutePath = join(memoryDir, file);
+    const content = safeRead(absolutePath);
+    const chars = content.length;
+    const lines = content.length > 0 ? content.split("\n").length : 0;
+    totalChars += chars;
+
+    const gitMeta = getGitLastModified(root, toRepoRelativePath(root, absolutePath));
+    const ageSeconds = gitMeta ? Math.max(0, now - gitMeta.epoch) : Number.POSITIVE_INFINITY;
+
+    let block = "░";
+    let bucket = "stale";
+    if (ageSeconds <= 2 * 60 * 60) {
+      block = "█";
+      bucket = "this session";
+    } else if (ageSeconds <= 24 * 60 * 60) {
+      block = "▓";
+      bucket = "recent";
+    } else if (ageSeconds <= 5 * 24 * 60 * 60) {
+      block = "▒";
+      bucket = "4-5 days";
+    }
+
+    return {
+      file,
+      block,
+      bucket,
+      last: gitMeta?.relative ?? "never",
+      lines,
+      chars,
+      tokens: estimateTokens(chars),
+      active: activeSet.has(file)
+    };
+  }).sort((a, b) => b.chars - a.chars);
+
+  const lastSave = getGitLastModified(root, toRepoRelativePath(root, memoryDir));
+
+  const header = [
+    "PMM Status",
+    `Last memory save: ${lastSave?.relative ?? "no git history"}`,
+    `Memory files: ${files.length} | Estimated read tokens: ${estimateTokens(totalChars)}`,
+    "",
+    "file | act | bucket | last | lines | tokens | active",
+    "-----|-----|--------|------|-------|--------|-------"
+  ];
+
+  const body = rows.map((row) =>
+    `${row.file} | ${row.block} | ${row.bucket} | ${row.last} | ${row.lines} | ${row.tokens} | ${row.active ? "yes" : "no"}`
+  );
+
+  return [...header, ...body].join("\n");
+}
+
+function buildDumpReport(root: string, memoryDir: string, activeFiles: string[], level: "status" | "summary" | "detailed"): string {
+  const files = activeFiles.length > 0
+    ? [...new Set(activeFiles)]
+    : (existsSync(memoryDir) ? readdirSync(memoryDir).filter((file) => file.endsWith(".md")).sort() : []);
+
+  const now = Math.floor(Date.now() / 1000);
+  let totalChars = 0;
+
+  const heatRows = files.map((file) => {
+    const absolutePath = join(memoryDir, file);
+    const content = safeRead(absolutePath);
+    totalChars += content.length;
+
+    const gitMeta = getGitLastModified(root, toRepoRelativePath(root, absolutePath));
+    const ageSeconds = gitMeta ? Math.max(0, now - gitMeta.epoch) : Number.POSITIVE_INFINITY;
+
+    let heat = "░░░░";
+    if (ageSeconds < 5 * 60) heat = "████";
+    else if (ageSeconds < 30 * 60) heat = "███░";
+    else if (ageSeconds < 2 * 60 * 60) heat = "██░░";
+    else if (ageSeconds < 24 * 60 * 60) heat = "█░░░";
+
+    return `${heat}  ${file.padEnd(24, " ")} ${gitMeta?.relative ?? "never"}`;
+  });
+
+  const lines: string[] = [
+    "PMM Dump",
+    `Level: ${level}`,
+    `Token estimate (read): ${estimateTokens(totalChars)}`,
+    "",
+    "Heatmap",
+    ...heatRows
+  ];
+
+  if (level !== "status") {
+    const timelinePath = join(memoryDir, "timeline.md");
+    const timelineLines = safeRead(timelinePath)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && (line.startsWith("-") || /^\d{4}-\d{2}-\d{2}/.test(line)));
+    const recentTimeline = timelineLines.slice(-5);
+    lines.push("", "Recent Timeline", ...(recentTimeline.length > 0 ? recentTimeline : ["(none)"]));
+  }
+
+  if (level === "detailed") {
+    lines.push("", "Detailed Active Files", "file | last", "-----|-----");
+    for (const file of files) {
+      const absolutePath = join(memoryDir, file);
+      const gitMeta = getGitLastModified(root, toRepoRelativePath(root, absolutePath));
+      lines.push(`${file} | ${gitMeta?.relative ?? "never"}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 function parseTemplates(templatesContent: string): Record<string, TemplateDefinition> {
   const templates: Record<string, TemplateDefinition> = {};
   const fileSections = templatesContent.split(/^##\s+/m);
@@ -556,6 +701,12 @@ const RUNTIME_INIT_PROFILE_GUARD = `
 - For lite|balanced|power, skip [INIT_QUESTIONS] entirely and apply pmm-config-<profile>.md.
 `;
 
+const RUNTIME_REPORT_VERBATIM_GUARD = `
+[PMM REPORT RUNTIME GUARD]
+- If pmm_status or pmm_dump tool returns { status: "REPORT_READY", report: string }, output the report verbatim.
+- Do not collapse REPORT_READY outputs into short summaries.
+`;
+
 const DEFAULT_HYDRATE_QUESTIONS: QuestionsConfig = {
   "questions": [
     {
@@ -698,6 +849,8 @@ export const NominexPMMPlugin: Plugin = async ({ client, worktree: pluginWorktre
 
       const instructions = `
 ${RUNTIME_INIT_PROFILE_GUARD}
+
+${RUNTIME_REPORT_VERBATIM_GUARD}
 
 ${systemInstructions}
 
@@ -1034,12 +1187,11 @@ ${systemTweaksInstructions}
             } catch (e) {}
           }
 
+          const report = buildStatusReport(root, memoryDir, activeFiles);
           return JSON.stringify({
-            status: "INSTRUCTION_READY",
-            instruction: {
-              type: "STATUS",
-              activeFiles
-            }
+            status: "REPORT_READY",
+            report,
+            activeFiles
           });
         }
       }),
@@ -1068,13 +1220,13 @@ ${systemTweaksInstructions}
             } catch (e) {}
           }
 
+          const level = args.level || "status";
+          const report = buildDumpReport(root, memoryDir, activeFiles, level);
           return JSON.stringify({
-            status: "INSTRUCTION_READY",
-            instruction: {
-              type: "DUMP",
-              level: args.level || "status",
-              activeFiles
-            }
+            status: "REPORT_READY",
+            report,
+            level,
+            activeFiles
           });
         }
       }),
