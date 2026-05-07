@@ -3,6 +3,7 @@ SHELL := /bin/zsh
 HARNESS_DIR := $(CURDIR)/pmm-harness
 MARKETPLACE_FILE := $(CURDIR)/.claude-plugin/marketplace.json
 CLAUDECODE_PLUGIN_FILE := $(HARNESS_DIR)/claudecode/pmm-plugin/.claude-plugin/plugin.json
+OPENCODE_VERSION_FILE := $(HARNESS_DIR)/opencode/plugins/pmm/version.json
 VERSION_FLAG_GOALS := --major --minor --patch
 REQUESTED_VERSION_FLAGS := $(filter $(VERSION_FLAG_GOALS),$(MAKECMDGOALS))
 
@@ -45,7 +46,7 @@ release-patch release-minor release-major: build-harness bump-versions verify-ve
 	@echo "Completed pmm-dist release with $(VERSION_BUMP) plugin version bump and marketplace sync."
 
 bump-versions:
-	@python3 "$(CURDIR)/bump_version.py" "$(MARKETPLACE_FILE)" "$(CLAUDECODE_PLUGIN_FILE)" "$(VERSION_BUMP)"
+	@python3 "$(CURDIR)/bump_version.py" "$(MARKETPLACE_FILE)" "$(CLAUDECODE_PLUGIN_FILE)" "$(VERSION_BUMP)" "$(OPENCODE_VERSION_FILE)"
 
 verify-versions:
 	@python3 -c 'import json,sys; mf="$(MARKETPLACE_FILE)"; pf="$(CLAUDECODE_PLUGIN_FILE)"; pv=json.load(open(pf))["version"]; entry=next((p for p in json.load(open(mf)).get("plugins",[]) if p.get("name")=="pmm"), None); sys.exit("Marketplace entry '\''pmm'\'' not found in {}".format(mf)) if entry is None else None; sys.exit("Version mismatch: plugin={} marketplace={}".format(pv, entry.get("version"))) if entry.get("version") != pv else None; print("Version sync verified: pmm={}".format(pv))'

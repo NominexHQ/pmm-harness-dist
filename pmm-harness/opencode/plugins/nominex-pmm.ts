@@ -354,20 +354,13 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
 function readLocalVersion(root: string): string {
   const opencodeVersionPath = join(root, ".opencode", "plugins", "pmm", "version.json");
 
-  if (existsSync(opencodeVersionPath)) {
-    try {
-      const parsed = JSON.parse(readFileSync(opencodeVersionPath, "utf-8"));
-      if (typeof parsed?.version === "string") {
-        return parsed.version;
-      }
-    } catch {
-      // Fall through to git tag detection.
-    }
+  if (!existsSync(opencodeVersionPath)) {
+    return "0.0.0";
   }
 
   try {
-    const tag = execSync("git describe --tags --abbrev=0", { cwd: root, stdio: "pipe" }).toString().trim();
-    return tag.length > 0 ? tag.replace(/^v/, "") : "0.0.0";
+    const parsed = JSON.parse(readFileSync(opencodeVersionPath, "utf-8"));
+    return typeof parsed?.version === "string" ? parsed.version : "0.0.0";
   } catch {
     return "0.0.0";
   }
@@ -1284,7 +1277,12 @@ ${systemTweaksInstructions}
             ? getGitTopLevel(nestedHarnessCandidate)
             : null;
           const gitRepoRoot = directGitRoot || nestedHarnessGitRoot;
-          const projectRoot = gitRepoRoot || invocationRoot;
+          const projectRoot = invocationRoot;
+          const localOpencodeDir = join(projectRoot, ".opencode");
+          const upstreamOpencodeDir = join(gitRepoRoot || "", "pmm-harness", "opencode");
+          const configDir = join(projectRoot, "config");
+          const memoryDir = resolvePmmMemoryDirPath(projectRoot);
+          const localVersionPath = join(projectRoot, ".opencode", "plugins", "pmm", "version.json");
 
           if (!gitRepoRoot) {
             return JSON.stringify({
@@ -1296,10 +1294,12 @@ ${systemTweaksInstructions}
                 projectRoot,
                 gitRepoRoot: null,
                 localVersion: readLocalVersion(projectRoot),
-                localVersionPath: existsSync(join(projectRoot, ".opencode", "plugins", "pmm", "version.json"))
-                  ? join(projectRoot, ".opencode", "plugins", "pmm", "version.json")
-                  : "git-tag",
-                memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
+                localVersionPath,
+                localOpencodeDir,
+                upstreamOpencodeDir: null,
+                configDir,
+                memoryDir,
+                memoryInitialized: existsSync(memoryDir),
                 gitStatus: validateGit(projectRoot)
               }
             });
@@ -1313,10 +1313,12 @@ ${systemTweaksInstructions}
               projectRoot,
               gitRepoRoot,
               localVersion: readLocalVersion(projectRoot),
-              localVersionPath: existsSync(join(projectRoot, ".opencode", "plugins", "pmm", "version.json"))
-                ? join(projectRoot, ".opencode", "plugins", "pmm", "version.json")
-                : "git-tag",
-              memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
+              localVersionPath,
+              localOpencodeDir,
+              upstreamOpencodeDir,
+              configDir,
+              memoryDir,
+              memoryInitialized: existsSync(memoryDir),
               gitStatus: validateGit(projectRoot)
             }
           });

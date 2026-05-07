@@ -27,14 +27,26 @@ def bump_semver(raw_version: str, bump: str, label: str) -> str:
     return f"{major}.{minor}.{patch}"
 
 
+def write_opencode_version(opencode_version_path: Path, version: str):
+    payload = {
+        "version": version,
+        "source": "pmm-harness-dist",
+        "scope": "opencode",
+        "generatedBy": "make release"
+    }
+    opencode_version_path.parent.mkdir(parents=True, exist_ok=True)
+    opencode_version_path.write_text(json.dumps(payload, indent=2) + "\n")
+
+
 def main():
     if len(sys.argv) < 4:
-        print("Usage: bump_version.py <marketplace_file> <plugin_file> <bump_type>")
+        print("Usage: bump_version.py <marketplace_file> <plugin_file> <bump_type> [opencode_version_file]")
         sys.exit(1)
 
     marketplace_path = Path(sys.argv[1])
     plugin_path = Path(sys.argv[2])
     bump = sys.argv[3]
+    opencode_version_path = Path(sys.argv[4]) if len(sys.argv) >= 5 else None
 
     if not plugin_path.exists():
         print(f"Claude plugin metadata not found at {plugin_path}")
@@ -76,6 +88,10 @@ def main():
 
     data["version"] = bumped_marketplace_version
     marketplace_path.write_text(json.dumps(data, indent=2) + "\n")
+
+    if opencode_version_path is not None:
+        write_opencode_version(opencode_version_path, bumped_marketplace_version)
+
     print(
         f"Updated {plugin_path}: {plugin_name}={bumped_plugin_version}; "
         f"{marketplace_path}: marketplace={data['version']} plugin {plugin_name}={bumped_plugin_version}"
