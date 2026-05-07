@@ -67,6 +67,19 @@ claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
 claude plugin reload
 ```
 
+Optional: enable Claude Cowork-friendly local skills:
+
+```text
+/pmm:init-local-skills
+```
+
+What this does:
+
+- Generates local flat command variants like `/pmm-recall`, `/pmm-save`, and `/pmm-status`.
+- Keeps the standard PMM slash commands (`/pmm:recall`, `/pmm:save`, etc.) available.
+- Extends PMM command ergonomics for Claude Cowork contexts where hyphen-form commands are preferred.
+- Can be rerun after plugin updates to refresh local skill variants.
+
 Scope options:
 
 - `project`: installed for the current repository only (recommended).
@@ -199,20 +212,20 @@ This updates system/plugin assets while preserving your project memory files.
 
 ### Command mapping by runtime (implemented in both runtimes)
 
-Use this mapping when switching between Claude Code and OpenCode.
+Use this mapping when switching between Claude Code slash commands and OpenCode underscore tool commands.
 
 | Capability | Claude Code | OpenCode |
 | --- | --- | --- |
-| Initialize | `pmm:init` | `pmm_init` |
-| Save memory | `pmm:save` | `pmm_save` |
-| Hydrate memory | `pmm:hydrate` | `pmm_hydrate` |
-| Query memory | `pmm:query` | `pmm_query` |
-| Recall context | `pmm:recall` | `pmm_recall` |
-| Status/diagnostics | `pmm:status` | `pmm_status` |
-| Settings | `pmm:settings` | `pmm_settings` |
-| Update PMM | `pmm:update` | `pmm_update` |
-| Memory dump (text) | `pmm:dump` | `pmm_dump` |
-| Memory visualization | `pmm:viz` | `pmm_viz` |
+| Initialize | `/pmm:init` | `pmm_init` |
+| Save memory | `/pmm:save` | `pmm_save` |
+| Hydrate memory | `/pmm:hydrate` | `pmm_hydrate` |
+| Query memory | `/pmm:query` | `pmm_query` |
+| Recall context | `/pmm:recall` | `pmm_recall` |
+| Status/diagnostics | `/pmm:status` | `pmm_status` |
+| Settings | `/pmm:settings` | `pmm_settings` |
+| Update PMM | `/pmm:update` | `pmm_update` |
+| Memory dump (text) | `/pmm:dump` | `pmm_dump` |
+| Memory visualization | `/pmm:viz` | `pmm_viz` |
 
 ### Runtime support matrix
 
@@ -230,8 +243,8 @@ This matrix is the source of truth for runtime parity status.
 
 ### Claude-only extras
 
-- `pmm:onboard`
-- `pmm:init-local-skills`
+- `pmm:onboard` — Seeds `user.md` from user identity intake.
+- `pmm:init-local-skills` — Generates local hyphen-form aliases (for example `/pmm-recall`) for Claude Cowork compatibility.
 
 ## Memory files
 
