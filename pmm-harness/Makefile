@@ -13,16 +13,23 @@ DIST_PLUGIN_DIRS := plugins/instructions
 # No upstream clone — edit directly.
 
 .PHONY: help \
-	build-opencode build-opencode-bash clean-opencode show-opencode-files
+	build-harness build-opencode build-claudecode build-opencode-bash clean-opencode show-opencode-files
 
 help:
 	@echo "Targets:"
+	@echo "  make build-harness       Build both OpenCode and Claude harness artifacts"
 	@echo "  make build-opencode      Copy shipping artifacts into pmm-harness-dist/pmm-harness/opencode"
+	@echo "  make build-claudecode    Generate local Claude skill variants in pmm-plugin/local"
 	@echo "  make build-opencode-bash Same as build-opencode, but forces /bin/bash as the shell"
 	@echo "  make clean-opencode      Remove generated harness files from pmm-harness-dist/pmm-harness/opencode"
 	@echo "  make show-opencode-files Show source files that are included in the OpenCode harness build"
 	@echo ""
 	@echo "  Claude Code plugin (claudecode/pmm-plugin/) is canonical — edit directly."
+
+build-harness: build-opencode build-claudecode
+
+build-claudecode:
+	@$(MAKE) -C "$(CURDIR)/claudecode/pmm-plugin" local
 
 clean-opencode:
 	@mkdir -p "$(DST_OPENCODE)"
