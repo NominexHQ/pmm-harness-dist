@@ -352,26 +352,22 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
 }
 
 function readLocalVersion(root: string): string {
-  const marketplacePath = join(root, ".claude-plugin", "marketplace.json");
+  const opencodeVersionPath = join(root, ".opencode", "plugins", "pmm", "version.json");
 
-  if (!existsSync(marketplacePath)) {
-    return "0.0.0";
+  if (existsSync(opencodeVersionPath)) {
+    try {
+      const parsed = JSON.parse(readFileSync(opencodeVersionPath, "utf-8"));
+      if (typeof parsed?.version === "string") {
+        return parsed.version;
+      }
+    } catch {
+      // Fall through to git tag detection.
+    }
   }
 
   try {
-    const parsed = JSON.parse(readFileSync(marketplacePath, "utf-8"));
-    if (typeof parsed?.version === "string") {
-      return parsed.version;
-    }
-
-    const plugins = Array.isArray(parsed?.plugins) ? parsed.plugins : [];
-    const pmmEntry = plugins.find((plugin: unknown) => {
-      if (!plugin || typeof plugin !== "object") return false;
-      const name = (plugin as { name?: unknown }).name;
-      return typeof name === "string" && name === "pmm";
-    }) as { version?: unknown } | undefined;
-
-    return typeof pmmEntry?.version === "string" ? pmmEntry.version : "0.0.0";
+    const tag = execSync("git describe --tags --abbrev=0", { cwd: root, stdio: "pipe" }).toString().trim();
+    return tag.length > 0 ? tag.replace(/^v/, "") : "0.0.0";
   } catch {
     return "0.0.0";
   }
@@ -1300,7 +1296,9 @@ ${systemTweaksInstructions}
                 projectRoot,
                 gitRepoRoot: null,
                 localVersion: readLocalVersion(projectRoot),
-                localVersionPath: join(projectRoot, ".claude-plugin", "marketplace.json"),
+                localVersionPath: existsSync(join(projectRoot, ".opencode", "plugins", "pmm", "version.json"))
+                  ? join(projectRoot, ".opencode", "plugins", "pmm", "version.json")
+                  : "git-tag",
                 memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
                 gitStatus: validateGit(projectRoot)
               }
@@ -1315,7 +1313,9 @@ ${systemTweaksInstructions}
               projectRoot,
               gitRepoRoot,
               localVersion: readLocalVersion(projectRoot),
-              localVersionPath: join(projectRoot, ".claude-plugin", "marketplace.json"),
+              localVersionPath: existsSync(join(projectRoot, ".opencode", "plugins", "pmm", "version.json"))
+                ? join(projectRoot, ".opencode", "plugins", "pmm", "version.json")
+                : "git-tag",
               memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
               gitStatus: validateGit(projectRoot)
             }

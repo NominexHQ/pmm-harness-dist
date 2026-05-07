@@ -18,7 +18,7 @@ Always runs regardless of action. Inputs available from the tool payload:
 - `instruction.projectRoot`
 - `instruction.gitRepoRoot`
 - `instruction.localVersion`
-- `instruction.localVersionPath` (plugin metadata path, typically `.claude-plugin/marketplace.json`)
+- `instruction.localVersionPath` (OpenCode metadata path when available, otherwise `git-tag`)
 
 First resolve the canonical repository root.
 
@@ -52,7 +52,7 @@ Determine the upstream tracking ref for the current branch.
 ERROR: Could not determine an upstream tracking branch for pmm-harness-dist.
 ```
 
-Read plugin metadata version from the fetched upstream ref using `git show .claude-plugin/marketplace.json` and compare to `instruction.localVersion`.
+Read upstream version from the canonical harness release source (prefer git tag/version marker used by OpenCode) and compare to `instruction.localVersion`.
 
 **If `instruction.action === "check"`:**
 
@@ -171,6 +171,6 @@ git commit -m "pmm: update to v{new_version}"
 - Never touch `memory/` content during update except to add new file types introduced by the update.
 - Never overwrite `config/instructions/` because those are user-managed overrides.
 - Merge, do not replace, managed files and settings files.
-- Pre-version installs are valid: missing plugin metadata version means `0.0.0` and full sync can be offered.
+- Pre-version installs are valid: missing OpenCode version metadata/tag means `0.0.0` and full sync can be offered.
 - File moves and renames should appear as delete + add via `files.system`.
 - The canonical update source is the fetched remote state of the deployed `pmm-harness-dist` clone, not a separate upstream checkout.
