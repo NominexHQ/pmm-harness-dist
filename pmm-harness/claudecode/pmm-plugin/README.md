@@ -28,6 +28,26 @@ claude plugin marketplace add anthropics/claude-plugins-community
 claude plugin install pmm@claude-community
 ```
 
+### Marketplace maintenance helper
+
+If you maintain PMM via git-backed marketplace installs, use:
+
+```bash
+scripts/marketplace-update.sh
+```
+
+Dry-run mode:
+
+```bash
+scripts/marketplace-update.sh --dry-run
+```
+
+This script:
+- lists marketplace installs,
+- matches PMM entries,
+- fast-forwards matching git checkouts,
+- runs `claude ... marketplace update <id>` for entries that changed.
+
 ---
 
 ## What it does
