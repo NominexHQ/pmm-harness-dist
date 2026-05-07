@@ -1,0 +1,738 @@
+<!-- pmm-cache: HASH SCOPE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMM — Memory Graph</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  #controls {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px;
+    max-width: 260px;
+    font-size: 13px;
+  }
+  #controls h3 { font-size: 14px; color: #e6edf3; margin-bottom: 4px; }
+  #search {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    color: #c9d1d9;
+    padding: 6px 8px;
+    font-size: 13px;
+    width: 100%;
+  }
+  #search:focus { outline: none; border-color: #4a9eff; }
+  .filter-group { display: flex; flex-wrap: wrap; gap: 4px 8px; }
+  .filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .filter-group input[type="checkbox"] { accent-color: #4a9eff; }
+  .section-toggles { display: flex; flex-direction: column; gap: 2px; }
+  .section-toggles label { font-size: 12px; }
+  #cluster-toggle {
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    color: #c9d1d9;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  #cluster-toggle:hover { background: #30363d; }
+
+  #legend {
+    position: fixed;
+    bottom: 60px;
+    left: 12px;
+    z-index: 10;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  #timeline-controls {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px 16px 8px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    min-width: 520px;
+    max-width: 750px;
+  }
+  #timeline-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #timeline-track-wrap {
+    position: relative;
+    flex: 1;
+    height: 28px;
+  }
+  #time-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    accent-color: #4a9eff;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
+  }
+  #commit-ticks {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    z-index: 1;
+  }
+  .commit-tick {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 6px;
+    background: #4a9eff;
+    border-radius: 1px;
+    opacity: 0.6;
+  }
+  .commit-tick.active { opacity: 1; background: #58a6ff; height: 8px; }
+  .commit-tick-label {
+    position: absolute;
+    top: 8px;
+    font-size: 8px;
+    color: #484f58;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .time-btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    color: #c9d1d9;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .time-btn:hover { background: #30363d; }
+  #timeline-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2px;
+  }
+  #time-label {
+    color: #8b949e;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 450px;
+  }
+  #time-counter {
+    color: #4a9eff;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #tooltip {
+    position: fixed;
+    display: none;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 20;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+  #tooltip .tt-name { color: #e6edf3; font-weight: 600; font-size: 13px; }
+  #tooltip .tt-type { color: #8b949e; }
+  #tooltip .tt-clusters { color: #8b949e; margin-top: 4px; }
+  #tooltip .tt-meta { color: #8b949e; margin-top: 4px; }
+
+  svg { width: 100%; height: 100vh; display: block; }
+  .link { fill: none; transition: opacity 0.3s; }
+  .link-label {
+    font-size: 10px;
+    fill: #8b949e;
+    pointer-events: none;
+    text-anchor: middle;
+    transition: opacity 0.3s;
+  }
+  .node-label {
+    fill: #c9d1d9;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .node-group { transition: opacity 0.3s; }
+  .hull {
+    fill-opacity: 0.08;
+    stroke-opacity: 0.3;
+    stroke-width: 1.5;
+  }
+  .hull-label {
+    font-size: 11px;
+    fill: #8b949e;
+    fill-opacity: 0.7;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <h3>PMM Graph</h3>
+  <input type="text" id="search" placeholder="Search nodes..." />
+  <div class="filter-group" id="type-filters"></div>
+  <div class="section-toggles" id="section-toggles"></div>
+  <button id="cluster-toggle">Toggle Clusters</button>
+</div>
+
+<div id="legend"></div>
+
+<div id="timeline-controls">
+  <div id="timeline-top">
+    <button class="time-btn" id="time-step-back" title="Previous commit">&#9664;</button>
+    <button class="time-btn" id="time-play" title="Play/Pause">&#9654;</button>
+    <button class="time-btn" id="time-step-fwd" title="Next commit">&#9654;&#9654;</button>
+    <div id="timeline-track-wrap">
+      <input type="range" id="time-slider" min="0" max="0" value="0" step="1">
+      <div id="commit-ticks"></div>
+    </div>
+  </div>
+  <div id="timeline-bottom">
+    <span id="time-label">Latest</span>
+    <span id="time-counter"></span>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<svg id="graph"></svg>
+
+<script>/*D3_PLACEHOLDER*/</script>
+<script>
+const PMM_DATA = /*PMM_DATA_PLACEHOLDER*/{"nodes":[],"edges":[],"clusters":[],"timeline":[],"metadata":{}}/*END_PLACEHOLDER*/;
+
+(function() {
+  const typeColors = {
+    file: '#4a9eff',
+    person: '#4ade80',
+    concept: '#fb923c',
+    tool: '#a78bfa',
+    process: '#94a3b8',
+    event: '#fbbf24'
+  };
+
+  // Build legend
+  const legendEl = document.getElementById('legend');
+  Object.entries(typeColors).forEach(([type, color]) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-dot" style="background:${color}"></span>${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    legendEl.appendChild(item);
+  });
+
+  // Build type filters
+  const typeFiltersEl = document.getElementById('type-filters');
+  const activeTypes = new Set(Object.keys(typeColors));
+  Object.keys(typeColors).forEach(type => {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.dataset.type = type;
+    cb.addEventListener('change', () => {
+      if (cb.checked) activeTypes.add(type); else activeTypes.delete(type);
+      updateVisibility();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + type.charAt(0).toUpperCase() + type.slice(1)));
+    typeFiltersEl.appendChild(label);
+  });
+
+  // Build section toggles
+  const sectionTogglesEl = document.getElementById('section-toggles');
+  const sections = [...new Set(PMM_DATA.edges.map(e => e.section).filter(Boolean))];
+  const activeSections = new Set(sections);
+  if (sections.length > 0) {
+    const header = document.createElement('div');
+    header.style.cssText = 'font-size:12px;color:#8b949e;margin-top:4px;';
+    header.textContent = 'Sections';
+    sectionTogglesEl.appendChild(header);
+    sections.forEach(sec => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+      cb.addEventListener('change', () => {
+        if (cb.checked) activeSections.add(sec); else activeSections.delete(sec);
+        updateVisibility();
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(' ' + sec));
+      sectionTogglesEl.appendChild(label);
+    });
+  }
+
+  // Cluster hull state
+  let showClusters = true;
+  document.getElementById('cluster-toggle').addEventListener('click', () => {
+    showClusters = !showClusters;
+    hullGroup.attr('display', showClusters ? null : 'none');
+  });
+
+  // SVG setup
+  const svg = d3.select('#graph');
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  svg.attr('viewBox', [0, 0, width, height]);
+
+  // Arrow marker
+  svg.append('defs').append('marker')
+    .attr('id', 'arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 20)
+    .attr('refY', 0)
+    .attr('markerWidth', 6)
+    .attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', '#30363d');
+
+  const g = svg.append('g');
+
+  // Cluster hulls
+  const hullGroup = g.append('g').attr('class', 'hulls');
+
+  // Links
+  const linkGroup = g.append('g');
+  const links = linkGroup.selectAll('line')
+    .data(PMM_DATA.edges)
+    .join('line')
+    .attr('class', 'link')
+    .attr('stroke', '#30363d')
+    .attr('stroke-width', d => Math.max(1, (d.weight || 0.5) * 3))
+    .attr('stroke-opacity', d => Math.max(0.2, d.weight || 0.5))
+    .attr('marker-end', d => d.type !== 'similarity' ? 'url(#arrow)' : null);
+
+  // Link labels
+  const linkLabels = linkGroup.selectAll('text')
+    .data(PMM_DATA.edges)
+    .join('text')
+    .attr('class', 'link-label')
+    .text(d => d.label || '');
+
+  // Nodes
+  const nodeGroup = g.append('g');
+
+  const nodeData = PMM_DATA.nodes;
+  const nodeMap = new Map(nodeData.map(n => [n.id, n]));
+
+  // Auto-create missing nodes referenced by edges (resilience against incomplete parsing)
+  PMM_DATA.edges.forEach(e => {
+    const src = typeof e.source === 'string' ? e.source : e.source.id;
+    const tgt = typeof e.target === 'string' ? e.target : e.target.id;
+    [src, tgt].forEach(id => {
+      if (!nodeMap.has(id)) {
+        const inferType = id.endsWith('.md') ? 'file' : 'concept';
+        const node = { id, type: inferType, label: id, metadata: {}, clusters: [], firstSeen: e.firstSeen, lastSeen: e.lastSeen };
+        nodeData.push(node);
+        nodeMap.set(id, node);
+      }
+    });
+  });
+
+  // Resolve edge source/target to objects for D3
+  const edgeData = PMM_DATA.edges.map(e => ({
+    ...e,
+    source: typeof e.source === 'string' ? e.source : e.source.id,
+    target: typeof e.target === 'string' ? e.target : e.target.id
+  }));
+
+  const simulation = d3.forceSimulation(nodeData)
+    .force('link', d3.forceLink(edgeData).id(d => d.id).distance(120))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collide', d3.forceCollide(30));
+
+  const nodes = nodeGroup.selectAll('g')
+    .data(nodeData)
+    .join('g')
+    .attr('class', 'node-group')
+    .call(d3.drag()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      })
+    );
+
+  nodes.append('circle')
+    .attr('r', 8)
+    .attr('fill', d => typeColors[d.type] || '#c9d1d9')
+    .attr('stroke', '#0d1117')
+    .attr('stroke-width', 1.5);
+
+  nodes.append('text')
+    .attr('class', 'node-label')
+    .attr('dy', -14)
+    .attr('font-size', 11)
+    .text(d => d.label || d.id);
+
+  // Tooltip
+  const tooltip = document.getElementById('tooltip');
+  nodes.on('mouseenter', (event, d) => {
+    let html = `<div class="tt-name">${d.label || d.id}</div>`;
+    html += `<div class="tt-type">${d.type}</div>`;
+    if (d.clusters && d.clusters.length) {
+      html += `<div class="tt-clusters">Clusters: ${d.clusters.join(', ')}</div>`;
+    }
+    if (d.metadata && Object.keys(d.metadata).length) {
+      html += `<div class="tt-meta">${Object.entries(d.metadata).map(([k,v]) => `${k}: ${v}`).join('<br>')}</div>`;
+    }
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (event.clientX + 12) + 'px';
+    tooltip.style.top = (event.clientY + 12) + 'px';
+  })
+  .on('mousemove', (event) => {
+    tooltip.style.left = (event.clientX + 12) + 'px';
+    tooltip.style.top = (event.clientY + 12) + 'px';
+  })
+  .on('mouseleave', () => { tooltip.style.display = 'none'; });
+
+  // Zoom
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 8])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+      // Adaptive font size
+      const k = event.transform.k;
+      nodes.selectAll('text').attr('font-size', Math.max(8, 11 / k));
+    });
+  svg.call(zoom);
+
+  // Cluster hulls rendering
+  const clusterColors = ['#4a9eff', '#4ade80', '#fb923c', '#a78bfa', '#94a3b8', '#fbbf24', '#f472b6', '#34d399'];
+
+  function updateHulls() {
+    hullGroup.selectAll('*').remove();
+    if (!showClusters || !PMM_DATA.clusters.length) return;
+    PMM_DATA.clusters.forEach((cluster, i) => {
+      const memberNodes = cluster.members
+        .map(m => nodeData.find(n => n.id === m))
+        .filter(Boolean)
+        .filter(n => n._visible);
+      if (memberNodes.length < 2) return;
+      const points = [];
+      memberNodes.forEach(n => {
+        const pad = 25;
+        points.push([n.x - pad, n.y - pad]);
+        points.push([n.x + pad, n.y - pad]);
+        points.push([n.x - pad, n.y + pad]);
+        points.push([n.x + pad, n.y + pad]);
+      });
+      const hull = d3.polygonHull(points);
+      if (!hull) return;
+      const color = clusterColors[i % clusterColors.length];
+      hullGroup.append('path')
+        .attr('class', 'hull')
+        .attr('d', 'M' + hull.join('L') + 'Z')
+        .attr('fill', color)
+        .attr('stroke', color);
+      // Centroid label
+      const cx = d3.mean(memberNodes, n => n.x);
+      const cy = d3.mean(memberNodes, n => n.y) - 30;
+      hullGroup.append('text')
+        .attr('class', 'hull-label')
+        .attr('x', cx).attr('y', cy)
+        .attr('text-anchor', 'middle')
+        .text(cluster.name);
+    });
+  }
+
+  // Simulation tick
+  simulation.on('tick', () => {
+    links
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    linkLabels
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2);
+    nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+
+    // Label opacity decay — labels fade with distance from graph centroid
+    const cx = d3.mean(nodeData, d => d.x) || width / 2;
+    const cy = d3.mean(nodeData, d => d.y) || height / 2;
+    let maxDist = 0;
+    nodeData.forEach(d => {
+      const dist = Math.hypot(d.x - cx, d.y - cy);
+      if (dist > maxDist) maxDist = dist;
+    });
+    if (maxDist < 1) maxDist = 1;
+    nodes.selectAll('text').attr('fill-opacity', function() {
+      const d = d3.select(this.parentNode).datum();
+      const dist = Math.hypot(d.x - cx, d.y - cy);
+      const t = dist / maxDist; // 0 at center, 1 at edge
+      return Math.max(0.15, 1 - t * 0.85); // 1.0 at center → 0.15 at edge
+    });
+    updateHulls();
+  });
+
+  // Search
+  const searchInput = document.getElementById('search');
+  searchInput.addEventListener('input', () => updateVisibility());
+
+  // Timeline state
+  const timeline = PMM_DATA.timeline || [];
+  let currentTimeTs = Infinity; // default: show everything
+
+  function updateVisibility() {
+    const query = searchInput.value.toLowerCase();
+
+    // Update node visibility (type + search + time)
+    nodes.each(function(d) {
+      const matchType = activeTypes.has(d.type);
+      const matchSearch = !query || (d.label || d.id).toLowerCase().includes(query);
+      const matchTime = (d.firstSeen == null) || (d.firstSeen <= currentTimeTs && d.lastSeen >= currentTimeTs);
+      d._visible = matchType && matchSearch && matchTime;
+    });
+
+    // Fade nodes
+    nodes.transition().duration(300)
+      .attr('opacity', d => d._visible ? 1 : 0)
+      .on('end', function(d) {
+        d3.select(this).attr('pointer-events', d._visible ? 'all' : 'none');
+      });
+
+    // Fade links
+    links.each(function(d) {
+      const src = typeof d.source === 'object' ? d.source : nodeMap.get(d.source);
+      const tgt = typeof d.target === 'object' ? d.target : nodeMap.get(d.target);
+      const sectionOk = !d.section || activeSections.has(d.section);
+      const timeOk = (d.firstSeen == null) || (d.firstSeen <= currentTimeTs && d.lastSeen >= currentTimeTs);
+      d._visible = src && tgt && src._visible && tgt._visible && sectionOk && timeOk;
+    });
+    links.transition().duration(300)
+      .attr('stroke-opacity', d => d._visible ? Math.max(0.2, d.weight || 0.5) : 0);
+
+    linkLabels.each(function(d) {
+      const src = typeof d.source === 'object' ? d.source : nodeMap.get(d.source);
+      const tgt = typeof d.target === 'object' ? d.target : nodeMap.get(d.target);
+      const sectionOk = !d.section || activeSections.has(d.section);
+      const timeOk = (d.firstSeen == null) || (d.firstSeen <= currentTimeTs && d.lastSeen >= currentTimeTs);
+      d._labelVisible = src && tgt && src._visible && tgt._visible && sectionOk && timeOk;
+    });
+    linkLabels.transition().duration(300).attr('opacity', d => d._labelVisible ? 1 : 0);
+  }
+
+  // Timeline slider setup — dual scale: time (continuous) + commits (ticks)
+  if (timeline.length > 1) {
+    const tlControls = document.getElementById('timeline-controls');
+    tlControls.style.display = 'flex';
+
+    const slider = document.getElementById('time-slider');
+    const label = document.getElementById('time-label');
+    const counter = document.getElementById('time-counter');
+    const ticksEl = document.getElementById('commit-ticks');
+
+    // Time-based scale: slider min/max are timestamps
+    const tsMin = timeline[0].timestamp;
+    const tsMax = timeline[timeline.length - 1].timestamp;
+    const tsRange = tsMax - tsMin || 1;
+
+    // Use fine-grained steps (1000 positions for smooth scrubbing)
+    const SLIDER_STEPS = 1000;
+    slider.min = 0;
+    slider.max = SLIDER_STEPS;
+    slider.value = SLIDER_STEPS;
+    slider.step = 1;
+
+    // Map slider position to timestamp and back
+    function sliderToTs(val) { return tsMin + (val / SLIDER_STEPS) * tsRange; }
+    function tsToSlider(ts) { return Math.round(((ts - tsMin) / tsRange) * SLIDER_STEPS); }
+
+    // Find the nearest commit at or before a timestamp
+    function commitAtTs(ts) {
+      let best = 0;
+      for (let i = 0; i < timeline.length; i++) {
+        if (timeline[i].timestamp <= ts) best = i;
+        else break;
+      }
+      return best;
+    }
+
+    let currentCommitIdx = timeline.length - 1;
+    let playInterval = null;
+
+    // Render commit tick marks on the track
+    function renderTicks() {
+      ticksEl.innerHTML = '';
+      timeline.forEach((commit, i) => {
+        const pct = ((commit.timestamp - tsMin) / tsRange) * 100;
+        // Tick mark
+        const tick = document.createElement('div');
+        tick.className = 'commit-tick' + (i === currentCommitIdx ? ' active' : '');
+        tick.style.left = pct + '%';
+        tick.title = commit.message;
+        ticksEl.appendChild(tick);
+      });
+      // Date labels at first and last tick (and middle if >4 commits)
+      const labelPositions = [0, timeline.length - 1];
+      if (timeline.length > 4) labelPositions.splice(1, 0, Math.floor(timeline.length / 2));
+      labelPositions.forEach(i => {
+        const commit = timeline[i];
+        const pct = ((commit.timestamp - tsMin) / tsRange) * 100;
+        const lbl = document.createElement('div');
+        lbl.className = 'commit-tick-label';
+        lbl.style.left = pct + '%';
+        const d = new Date(commit.timestamp * 1000);
+        lbl.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        ticksEl.appendChild(lbl);
+      });
+    }
+
+    function formatDate(ts) {
+      const d = new Date(ts * 1000);
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) +
+        ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function visibleCounts() {
+      let n = 0, e = 0;
+      nodeData.forEach(d => { if (d._visible) n++; });
+      PMM_DATA.edges.forEach(d => { if (d._visible) e++; });
+      return { n, e };
+    }
+
+    function updateTimeline() {
+      const commit = timeline[currentCommitIdx];
+      currentTimeTs = commit.timestamp;
+      const msg = commit.message.length > 40 ? commit.message.substring(0, 37) + '...' : commit.message;
+      label.textContent = formatDate(commit.timestamp) + '  ' + msg;
+      renderTicks();
+      updateVisibility();
+      const counts = visibleCounts();
+      counter.textContent = counts.n + 'n ' + counts.e + 'e · commit ' + (currentCommitIdx + 1) + '/' + timeline.length;
+    }
+
+    // Slider input: continuous time, snaps to nearest commit for graph state
+    slider.addEventListener('input', () => {
+      const ts = sliderToTs(parseInt(slider.value));
+      currentCommitIdx = commitAtTs(ts);
+      updateTimeline();
+      // Keep slider at the exact scrub position (don't snap the thumb)
+      // But update the graph to the nearest commit's state
+    });
+
+    // Double-click slider to snap thumb to nearest commit
+    slider.addEventListener('dblclick', () => {
+      slider.value = tsToSlider(timeline[currentCommitIdx].timestamp);
+    });
+
+    // Step buttons: jump to next/previous commit (major ticks)
+    document.getElementById('time-step-back').addEventListener('click', () => {
+      if (currentCommitIdx > 0) {
+        currentCommitIdx--;
+        slider.value = tsToSlider(timeline[currentCommitIdx].timestamp);
+        updateTimeline();
+      }
+    });
+    document.getElementById('time-step-fwd').addEventListener('click', () => {
+      if (currentCommitIdx < timeline.length - 1) {
+        currentCommitIdx++;
+        slider.value = tsToSlider(timeline[currentCommitIdx].timestamp);
+        updateTimeline();
+      }
+    });
+
+    // Play button: auto-advance through commits
+    const playBtn = document.getElementById('time-play');
+    playBtn.addEventListener('click', function() {
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+        this.innerHTML = '&#9654;';
+        return;
+      }
+      this.innerHTML = '&#9646;&#9646;';
+      if (currentCommitIdx >= timeline.length - 1) { currentCommitIdx = 0; }
+      playInterval = setInterval(() => {
+        if (currentCommitIdx >= timeline.length - 1) {
+          clearInterval(playInterval);
+          playInterval = null;
+          playBtn.innerHTML = '&#9654;';
+          return;
+        }
+        currentCommitIdx++;
+        slider.value = tsToSlider(timeline[currentCommitIdx].timestamp);
+        updateTimeline();
+      }, 800);
+    });
+
+    // Initial render
+    renderTicks();
+    updateTimeline();
+  }
+})();
+</script>
+</body>
+</html>

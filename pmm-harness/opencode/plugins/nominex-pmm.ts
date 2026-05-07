@@ -1,7 +1,7 @@
 import type { Plugin, ToolContext } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
-import { existsSync, readFileSync, readdirSync } from "fs";
-import { isAbsolute, join } from "path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "fs";
+import { dirname, isAbsolute, join } from "path";
 import { execSync } from "child_process";
 
 // Use the zod instance provided by the host tool to avoid version mismatches
@@ -84,12 +84,38 @@ interface SettingsSummary {
 
 function getRoot(context: ToolContext, fallbackProjectRoot?: string): string {
   // Always anchor PMM paths to a stable project root instead of tool/runtime worktree context.
-  return fallbackProjectRoot || context.directory || process.cwd();
+  // Some runtimes can pass '/' as plugin worktree; treat that as invalid and fall back.
+  const candidates = [fallbackProjectRoot, context.directory, context.worktree, process.cwd()]
+    .filter((value): value is string => typeof value === "string" && value.length > 0)
+    .map((value) => value.trim())
+    .filter((value) => value !== "/");
+
+  return candidates[0] ?? process.cwd();
 }
 
 function safeRead(path: string): string {
   try { return existsSync(path) ? readFileSync(path, "utf-8") : ""; }
   catch { return ""; }
+}
+
+function ensureDir(path: string): void {
+  if (!existsSync(path)) {
+    mkdirSync(path, { recursive: true });
+  }
+}
+
+function copyIfMissing(sourcePath: string, targetPath: string): void {
+  if (!existsSync(sourcePath) || existsSync(targetPath)) {
+    return;
+  }
+  ensureDir(dirname(targetPath));
+  copyFileSync(sourcePath, targetPath);
+}
+
+function defaultMemoryFileContent(filename: string, templates: Record<string, TemplateDefinition>): string {
+  const template = templates[filename];
+  const header = template?.header || filename.replace(/\.md$/i, "").replace(/[-_]/g, " ");
+  return `# ${header}\n\n`;
 }
 
 /**
@@ -502,6 +528,30 @@ const DEFAULT_INIT_QUESTIONS: QuestionsConfig = {
   ]
 };
 
+const DEFAULT_INIT_PROFILE_QUESTION: QuestionsConfig = {
+  "questions": [
+    {
+      "header": "Profile",
+      "question": "Choose your PMM initialization profile.",
+      "options": [
+        { "label": "lite", "description": "Minimal setup, lower token burn." },
+        { "label": "balanced", "description": "Recommended default profile." },
+        { "label": "power", "description": "Full pre-set profile." },
+        { "label": "power-user-wizard", "description": "Interactive full configuration flow." }
+      ]
+    }
+  ]
+};
+
+const RUNTIME_INIT_PROFILE_GUARD = `
+[PMM INIT RUNTIME GUARD]
+- For pmm_init INSTALL mode, profile selection is mandatory before any full init questionnaire.
+- If instruction.requestedProfile is one of lite|balanced|power, use it directly.
+- If instruction.requestedProfile is null, ask [INIT_PROFILE_QUESTION] first and capture exactly one selection.
+- Only run [INIT_QUESTIONS] when and only when the selected profile is power-user-wizard.
+- For lite|balanced|power, skip [INIT_QUESTIONS] entirely and apply pmm-config-<profile>.md.
+`;
+
 const DEFAULT_HYDRATE_QUESTIONS: QuestionsConfig = {
   "questions": [
     {
@@ -625,6 +675,7 @@ export const NominexPMMPlugin: Plugin = async ({ client, worktree: pluginWorktre
       const root = pluginWorktree || process.cwd();
       
       const systemInstructions = loadInstruction(root, "pmm-system", "");
+      const initProfileQuestion = loadQuestionsConfig(root, "pmm-init-profile-question", DEFAULT_INIT_PROFILE_QUESTION);
       const initQuestions = loadQuestionsConfig(root, "pmm-init-questions", DEFAULT_INIT_QUESTIONS);
       const hydrateQuestions = loadQuestionsConfig(root, "pmm-hydrate-questions", DEFAULT_HYDRATE_QUESTIONS);
       const settingsQuestions = loadQuestionsConfig(root, "pmm-settings-questions", DEFAULT_SETTINGS_QUESTIONS);
@@ -642,7 +693,14 @@ export const NominexPMMPlugin: Plugin = async ({ client, worktree: pluginWorktre
       const systemTweaksInstructions = loadInstruction(root, "pmm-system-tweaks", "");
 
       const instructions = `
+${RUNTIME_INIT_PROFILE_GUARD}
+
 ${systemInstructions}
+
+[INIT_PROFILE_QUESTION]
+\`\`\`json
+${JSON.stringify(initProfileQuestion, null, 2)}
+\`\`\`
 
 [INIT_QUESTIONS]
 \`\`\`json
@@ -706,13 +764,105 @@ ${systemTweaksInstructions}
     tool: {
       pmm_init: tool({
         description: "Checks PMM initialization state and returns paths only (does not create files).",
-        args: {},
+        args: {
+          profile: z.enum(["lite", "balanced", "power"]).optional().describe("Optional init profile template to apply during INSTALL mode.")
+        },
         execute: async (args, context: ToolContext) => {
           const root = getRoot(context, pluginWorktree);
           const memoryDir = resolvePmmMemoryDirPath(root);
           const mode = existsSync(join(memoryDir, "config.md")) ? "MANAGE" : "INSTALL";
+
+          if (mode === "INSTALL" && args.profile) {
+            const profileTemplatePath = resolveInstructionPath(root, [`pmm-config-${args.profile}`], "md");
+
+            if (!profileTemplatePath) {
+              return JSON.stringify({
+                status: "ERROR",
+                message: `Missing profile template: pmm-config-${args.profile}.md`,
+                mode,
+                requestedProfile: args.profile,
+                projectRoot: root,
+                memoryDir
+              });
+            }
+
+            const profileConfig = readFileSync(profileTemplatePath, "utf-8");
+            const templatesMarkdown = loadInstruction(root, "pmm-memory-templates", DEFAULT_MEMORY_TEMPLATES_MARKDOWN);
+            const templates = parseTemplates(templatesMarkdown);
+            const activeFiles = parseActiveFiles(profileConfig);
+            const requiredFiles = Array.from(new Set([...activeFiles, "threads-open.md", "threads-closed.md"]));
+
+            ensureDir(memoryDir);
+            ensureDir(join(root, "config", "instructions"));
+            ensureDir(join(root, "pmm"));
+
+            writeFileSync(join(memoryDir, "config.md"), profileConfig, "utf-8");
+
+            const createdFiles: string[] = [];
+            for (const file of requiredFiles) {
+              const targetPath = join(memoryDir, file);
+              if (!existsSync(targetPath)) {
+                writeFileSync(targetPath, defaultMemoryFileContent(file, templates), "utf-8");
+                createdFiles.push(targetPath);
+              }
+            }
+
+            const defaultsDir = join(root, PLUGIN_INSTRUCTIONS_DIR);
+            const overridesDir = join(root, MEMORY_INSTRUCTIONS_DIR);
+            const seedFiles = [
+              "pmm-system.md",
+              "pmm-init.md",
+              "pmm-hydrate.md",
+              "pmm-save.md",
+              "pmm-recall.md",
+              "pmm-query.md",
+              "pmm-status.md",
+              "pmm-dump.md",
+              "pmm-settings.md",
+              "pmm-update.md",
+              "pmm-viz.md",
+              "pmm-system-tweaks.md",
+              "pmm-init-questions.json",
+              "pmm-hydrate-questions.json",
+              "pmm-settings-questions.json",
+              "pmm-template-agent.md",
+              "pmm-template-claude.md"
+            ];
+
+            for (const file of seedFiles) {
+              copyIfMissing(join(defaultsDir, file), join(overridesDir, file));
+            }
+
+            copyIfMissing(join(root, ".opencode", "plugins", "pmm", "pmm-viz-template.html"), join(root, "pmm", "pmm-viz-template.html"));
+            copyIfMissing(join(root, ".opencode", "plugins", "pmm", "d3.v7.min.js"), join(root, "pmm", "d3.v7.min.js"));
+
+            const claudeTemplate = loadInstruction(root, "pmm-template-claude", "");
+            const agentsTemplate = loadInstruction(root, "pmm-template-agent", "");
+            if (claudeTemplate && !existsSync(join(root, "CLAUDE.md"))) {
+              writeFileSync(join(root, "CLAUDE.md"), claudeTemplate, "utf-8");
+            }
+            if (agentsTemplate && !existsSync(join(root, "AGENTS.md"))) {
+              writeFileSync(join(root, "AGENTS.md"), agentsTemplate, "utf-8");
+            }
+
+            return JSON.stringify({
+              status: "INITIALIZED",
+              mode: "MANAGE",
+              requestedProfile: args.profile,
+              projectRoot: root,
+              memoryDir,
+              initializedFiles: [join(memoryDir, "config.md"), ...requiredFiles.map((file) => join(memoryDir, file))],
+              newlyCreatedFiles: createdFiles,
+              instructionsOverrideDir: join(root, MEMORY_INSTRUCTIONS_DIR),
+              defaultInstructionsDir: join(root, PLUGIN_INSTRUCTIONS_DIR),
+              assetsSourceDir: join(root, ".opencode", "plugins", "pmm"),
+              assetsTargetDir: join(root, "pmm")
+            });
+          }
+
           return JSON.stringify({
             mode,
+            requestedProfile: args.profile ?? null,
             projectRoot: root,
             memoryDir,
             instructionsOverrideDir: join(root, MEMORY_INSTRUCTIONS_DIR),

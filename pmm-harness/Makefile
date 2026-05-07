@@ -7,7 +7,7 @@ DST_OPENCODE := $(PROJECT_ROOT)/pmm-harness-dist/pmm-harness/opencode
 # Shipping allowlist: only files required to distribute the OpenCode PMM plugin.
 DIST_ROOT_FILES := package.json opencode.json
 DIST_PLUGIN_FILES := plugins/nominex-pmm.ts
-DIST_PLUGIN_DIRS := plugins/instructions
+DIST_PLUGIN_DIRS := plugins/instructions plugins/pmm
 
 # Claude Code plugin (claudecode/pmm-plugin/) is canonical in this repo.
 # No upstream clone — edit directly.

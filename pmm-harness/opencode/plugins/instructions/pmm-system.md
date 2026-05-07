@@ -1,7 +1,11 @@
 <nominex-memory>
 [PMM INIT WORKFLOW]
-- 'pmm_init' returns a JSON payload with a `mode` field (`"INSTALL"` or `"MANAGE"`), plus `projectRoot`, `memoryDir`, `instructionsOverrideDir`, `defaultInstructionsDir`, `assetsSourceDir`, and `assetsTargetDir`.
-- If `mode` is `'INSTALL'`, you MUST guide the user through the initialization process using the 'question' tool with the following JSON. You MUST present all tabs and get the user's answers before proceeding. After the user confirms, you MUST follow the '[PMM_POST_INIT_INSTRUCTIONS]'.
+- 'pmm_init' returns a JSON payload with a `mode` field (`"INSTALL"` or `"MANAGE"`), plus optional `requestedProfile` (`"lite" | "balanced" | "power" | null`), `projectRoot`, `memoryDir`, `instructionsOverrideDir`, `defaultInstructionsDir`, `assetsSourceDir`, and `assetsTargetDir`.
+- If `mode` is `'INSTALL'`, you MUST run the profile-first initialization flow from `[PMM_POST_INIT_INSTRUCTIONS]`:
+  - use `requestedProfile` when provided (`lite|balanced|power`),
+  - otherwise ask the profile selector question,
+  - if selected profile is `lite|balanced|power`, apply that profile directly and skip the full questionnaire,
+  - only run the full tabbed init questionnaire when the user chooses `power-user-wizard`.
 - If `mode` is `'MANAGE'`, PMM is already initialized. You should acknowledge this and offer to manage settings, perform save/recall/hydrate, or run an instruction sync/update flow via '[PMM_POST_INIT_INSTRUCTIONS]'.
 
 [PMM HYDRATE WORKFLOW]
