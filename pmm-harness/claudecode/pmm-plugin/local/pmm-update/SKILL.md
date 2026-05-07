@@ -141,19 +141,30 @@ If user approves, dispatch a `general-purpose` agent:
    cp pmm/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
    ```
 
-3. **Commit**:
+3. **Refresh existing local PMM skills (opt-in by prior install)**:
+
+   If `.claude/skills/` contains existing `pmm-*` entries, refresh them in place using auto mode.
+   Do not create new local installs when no existing `pmm-*` entries are present.
+
+   ```bash
+   if ls .claude/skills/pmm-* >/dev/null 2>&1; then
+     .claude/plugins/pmm/scripts/init-local.sh --mode auto --refresh .claude/plugins/pmm .claude/skills
+   fi
+   ```
+
+4. **Commit**:
    ```bash
    git add .claude/plugins/ pmm/ README.md .gitignore .claude/settings.json
    git commit -m "pmm- update to v{new_version}"
    ```
 
-4. **Clean up**:
+5. **Clean up**:
    ```bash
    rm -rf {temp_dir}
    rm -f pmm/viz-cache.html
    ```
 
-5. **Report** summary of what changed.
+6. **Report** summary of what changed.
 
 ## Notes
 

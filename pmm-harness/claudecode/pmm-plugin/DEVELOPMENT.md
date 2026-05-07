@@ -21,13 +21,15 @@ compatibility.
 - `description` gets trigger phrase list appended
 - Asset directories (`assets/`) copied as-is
 
-## Symlink installation
+## Local skill installation
 
-`scripts/init-local.sh [--force] <plugin-root> <target-skills-dir>`:
+`scripts/init-local.sh [--force] [--refresh] [--mode symlink|copy|auto] <plugin-root> <target-skills-dir>`:
 
-- Creates relative symlinks from `.claude/skills/pmm-*` to `local/pmm-*`
-- Idempotent: skips correct symlinks, warns on standalone copies
-- `--force` overwrites standalone copies and wrong-target symlinks
+- Default `--mode auto`: symlink first, copy fallback when symlinks are unavailable (Windows-safe)
+- `--mode copy`: force copy-based installs
+- `--refresh`: refresh existing local installs in place (useful after plugin updates)
+- Idempotent: skips already-correct installs
+- `--force` overwrites standalone copies and wrong-target links
 - Generic: works for any plugin with a `local/` directory
 
 Both `vera:init-local-skills` and `pmm:init-local-skills` invoke this script.

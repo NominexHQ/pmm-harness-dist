@@ -1,28 +1,59 @@
 #!/usr/bin/env bash
-# init-local.sh — Symlink local skill variants into a project's .claude/skills/.
+# init-local.sh — Install local skill variants into a project's .claude/skills/.
 # Generic: works for any plugin that ships a local/ directory.
 #
-# Usage: init-local.sh [--force] <plugin-root> <target-skills-dir>
+# Usage: init-local.sh [--force] [--refresh] [--mode symlink|copy|auto] <plugin-root> <target-skills-dir>
 #
 #   plugin-root       Path to the plugin installation (must contain local/)
 #   target-skills-dir Path to .claude/skills/ in the project
 #   --force           Overwrite standalone copies / wrong-target symlinks
+#   --refresh         Refresh existing installs in place
+#   --mode            Install mode (default: auto)
 
 set -euo pipefail
 
 # --- Parse args ---
 FORCE=0
+REFRESH=0
+MODE="auto"
 POSITIONAL=()
 
-for arg in "$@"; do
-  case "$arg" in
-    --force) FORCE=1 ;;
-    *) POSITIONAL+=("$arg") ;;
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --force)
+      FORCE=1
+      shift
+      ;;
+    --refresh)
+      REFRESH=1
+      shift
+      ;;
+    --mode)
+      MODE="${2:-}"
+      if [ -z "$MODE" ]; then
+        echo "Missing value for --mode (expected: symlink|copy|auto)" >&2
+        exit 1
+      fi
+      shift 2
+      ;;
+    --mode=*)
+      MODE="${1#*=}"
+      shift
+      ;;
+    *)
+      POSITIONAL+=("$1")
+      shift
+      ;;
   esac
 done
 
+if [ "$MODE" != "symlink" ] && [ "$MODE" != "copy" ] && [ "$MODE" != "auto" ]; then
+  echo "Invalid --mode '$MODE' (expected: symlink|copy|auto)" >&2
+  exit 1
+fi
+
 if [ "${#POSITIONAL[@]}" -lt 2 ]; then
-  echo "Usage: init-local.sh [--force] <plugin-root> <target-skills-dir>" >&2
+  echo "Usage: init-local.sh [--force] [--refresh] [--mode symlink|copy|auto] <plugin-root> <target-skills-dir>" >&2
   exit 1
 fi
 
@@ -48,8 +79,113 @@ if [ ${#SKILLS[@]} -eq 0 ]; then
   exit 0
 fi
 
+# --- Helpers ---
+copy_item() {
+  local src_item="$1"
+  local tgt_item="$2"
+
+  rm -rf "$tgt_item"
+  mkdir -p "$(dirname "$tgt_item")"
+  if [ -d "$src_item" ]; then
+    cp -R "$src_item" "$tgt_item"
+  else
+    cp "$src_item" "$tgt_item"
+  fi
+}
+
+link_item() {
+  local rel_path="$1"
+  local tgt_item="$2"
+
+  rm -rf "$tgt_item"
+  mkdir -p "$(dirname "$tgt_item")"
+  ln -s "$rel_path" "$tgt_item"
+}
+
+ensure_item() {
+  local src_item="$1"
+  local tgt_item="$2"
+  local rel_path="$3"
+  local mode="$4"
+  local has_existing="$5"
+  local is_symlink="$6"
+  local existing_link="$7"
+
+  if [ "$mode" = "copy" ]; then
+    if [ "$has_existing" = "1" ] && [ "$REFRESH" -ne 1 ] && [ "$FORCE" -ne 1 ]; then
+      echo "warn"
+      return
+    fi
+    copy_item "$src_item" "$tgt_item"
+    if [ "$has_existing" = "1" ]; then
+      echo "refreshed"
+    else
+      echo "copied"
+    fi
+    return
+  fi
+
+  if [ "$mode" = "symlink" ]; then
+    if [ "$is_symlink" = "1" ] && [ "$existing_link" = "$rel_path" ]; then
+      echo "skipped"
+      return
+    fi
+    if [ "$has_existing" = "1" ] && [ "$REFRESH" -ne 1 ] && [ "$FORCE" -ne 1 ]; then
+      echo "warn"
+      return
+    fi
+    link_item "$rel_path" "$tgt_item"
+    if [ "$has_existing" = "1" ]; then
+      echo "overwritten"
+    else
+      echo "linked"
+    fi
+    return
+  fi
+
+  # auto mode
+  if [ "$is_symlink" = "1" ] && [ "$existing_link" = "$rel_path" ]; then
+    echo "skipped"
+    return
+  fi
+
+  if [ "$has_existing" = "1" ] && [ "$is_symlink" = "0" ]; then
+    if [ "$REFRESH" -eq 1 ] || [ "$FORCE" -eq 1 ]; then
+      copy_item "$src_item" "$tgt_item"
+      echo "refreshed"
+      return
+    fi
+    echo "warn"
+    return
+  fi
+
+  if [ "$has_existing" = "1" ] && [ "$REFRESH" -ne 1 ] && [ "$FORCE" -ne 1 ]; then
+    echo "warn"
+    return
+  fi
+
+  mkdir -p "$(dirname "$tgt_item")"
+  rm -rf "$tgt_item"
+  if ln -s "$rel_path" "$tgt_item" 2>/dev/null; then
+    if [ "$has_existing" = "1" ]; then
+      echo "overwritten"
+    else
+      echo "linked"
+    fi
+  else
+    copy_item "$src_item" "$tgt_item"
+    if [ "$has_existing" = "1" ]; then
+      echo "refreshed"
+    else
+      echo "copied"
+    fi
+  fi
+}
+
 # --- Process each skill ---
 LINKED=()
+COPIED=()
+REFRESHED=()
 SKIPPED=()
 OVERWRITTEN=()
 WARNED=()
@@ -70,6 +206,8 @@ for skill in "${SKILLS[@]}"; do
   done
 
   did_link=0
+  did_copy=0
+  did_refresh=0
   did_skip=0
   did_overwrite=0
   did_warn=0
@@ -81,38 +219,26 @@ for skill in "${SKILLS[@]}"; do
     # Compute relative path from target to source
     rel_path=$(python3 -c "import os.path; print(os.path.relpath('$src_item', '$tgt_dir'))")
 
-    if [ ! -e "$tgt_item" ] && [ ! -L "$tgt_item" ]; then
-      # Case A: doesn't exist — link it
-      mkdir -p "$tgt_dir"
-      ln -s "$rel_path" "$tgt_item"
-      did_link=1
-
-    elif [ -L "$tgt_item" ]; then
-      existing=$(readlink "$tgt_item")
-      if [ "$existing" = "$rel_path" ]; then
-        # Case B: correct symlink — skip
-        did_skip=1
-      else
-        # Case D: wrong symlink
-        if [ "$FORCE" -eq 1 ]; then
-          rm "$tgt_item"
-          ln -s "$rel_path" "$tgt_item"
-          did_overwrite=1
-        else
-          did_warn=1
-        fi
-      fi
-
-    else
-      # Case C: standalone file/dir (not a symlink)
-      if [ "$FORCE" -eq 1 ]; then
-        rm -rf "$tgt_item"
-        ln -s "$rel_path" "$tgt_item"
-        did_overwrite=1
-      else
-        did_warn=1
+    has_existing=0
+    is_symlink=0
+    existing=""
+    if [ -e "$tgt_item" ] || [ -L "$tgt_item" ]; then
+      has_existing=1
+      if [ -L "$tgt_item" ]; then
+        is_symlink=1
+        existing=$(readlink "$tgt_item")
       fi
     fi
+
+    result=$(ensure_item "$src_item" "$tgt_item" "$rel_path" "$MODE" "$has_existing" "$is_symlink" "$existing")
+    case "$result" in
+      linked) did_link=1 ;;
+      copied) did_copy=1 ;;
+      refreshed) did_refresh=1 ;;
+      overwritten) did_overwrite=1 ;;
+      skipped) did_skip=1 ;;
+      warn) did_warn=1 ;;
+    esac
   done
 
   # Categorise skill by worst-case item outcome
@@ -120,6 +246,10 @@ for skill in "${SKILLS[@]}"; do
     WARNED+=("$skill")
   elif [ "$did_overwrite" -eq 1 ]; then
     OVERWRITTEN+=("$skill")
+  elif [ "$did_refresh" -eq 1 ]; then
+    REFRESHED+=("$skill")
+  elif [ "$did_copy" -eq 1 ]; then
+    COPIED+=("$skill")
   elif [ "$did_link" -eq 1 ]; then
     LINKED+=("$skill")
   else
@@ -130,14 +260,18 @@ done
 # --- Report ---
 echo "init-local — done"
 echo ""
+echo "  mode:                 $MODE"
+echo "  refresh:              $REFRESH"
 
 join_arr() { local out="$1"; shift; for x in "$@"; do out="$out, $x"; done; echo "$out"; }
 
 [ ${#LINKED[@]} -gt 0 ]      && echo "  linked:               $(join_arr "${LINKED[@]}")"
-[ ${#SKIPPED[@]} -gt 0 ]     && echo "  already linked:       $(join_arr "${SKIPPED[@]}")"
+[ ${#COPIED[@]} -gt 0 ]      && echo "  copied:               $(join_arr "${COPIED[@]}")"
+[ ${#REFRESHED[@]} -gt 0 ]   && echo "  refreshed:            $(join_arr "${REFRESHED[@]}")"
+[ ${#SKIPPED[@]} -gt 0 ]     && echo "  already installed:    $(join_arr "${SKIPPED[@]}")"
 [ ${#OVERWRITTEN[@]} -gt 0 ] && echo "  overwritten:          $(join_arr "${OVERWRITTEN[@]}")"
 [ ${#WARNED[@]} -gt 0 ]      && echo "  skipped (standalone): $(join_arr "${WARNED[@]}") (use --force)"
 
-TOTAL=$(( ${#LINKED[@]} + ${#SKIPPED[@]} + ${#OVERWRITTEN[@]} + ${#WARNED[@]} ))
+TOTAL=$(( ${#LINKED[@]} + ${#COPIED[@]} + ${#REFRESHED[@]} + ${#SKIPPED[@]} + ${#OVERWRITTEN[@]} + ${#WARNED[@]} ))
 echo ""
 echo "  Total: $TOTAL skills processed"

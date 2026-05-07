@@ -442,18 +442,19 @@ pmm:update
 
 Cowork has no private marketplace support — you can't install plugins the normal way. If you're using PMM in a Cowork project, skills aren't available unless they exist as local skill files in `.claude/skills/`. Manually copying and maintaining those files is error-prone and drifts from the plugin source.
 
-`pmm:init-local-skills` symlinks pre-built local skill variants from the plugin into `.claude/skills/` so PMM skills work in Cowork without manual file management.
+`pmm:init-local-skills` installs pre-built local skill variants from the plugin into `.claude/skills/` so PMM skills work in Cowork without manual file management. Default install mode is auto: symlink when supported, copy fallback when symlink creation is unavailable.
 
 **Arguments**:
 
 | Argument | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `--force` | No | — | Overwrite existing standalone copies and fix wrong-target symlinks. Correct symlinks are always skipped regardless |
+| `--force` | No | — | Overwrite existing conflicting copies/links |
 
 **Use cases**:
 - **Cowork project**: Run once after installing PMM to make all skills available in Cowork's local skill system
 - **After `pmm:update`**: Re-run to pick up any new or changed local skill variants shipped with the update
-- **Fixing broken symlinks**: `--force` replaces standalone copies or wrong-target symlinks with correct ones
+- **Fixing broken installs**: `--force` replaces standalone copies or wrong-target links with correct local installs
+- **After plugin updates**: re-run `pmm:init-local-skills` to refresh local copies/links (some update flows do this automatically)
 
 **Example**:
 ```
@@ -462,9 +463,9 @@ pmm:init-local-skills
 
 **Behaviour notes**:
 - Idempotent. Running twice with no changes produces all skips — safe to re-run at any time.
-- Uses relative symlinks so the project remains portable.
+- Uses auto install mode (relative symlink or copy fallback) so projects remain portable across platforms.
 - Never modifies plugin source files — the `local/` directory inside the plugin is read-only.
-- `--force` only affects standalone copies and wrong-target symlinks. Correct symlinks are never touched.
+- `--force` only affects conflicting standalone content or wrong-target links.
 
 ---
 
@@ -585,13 +586,13 @@ Not loaded at session start. Read into context when a query, hydration, or visua
 ## Platform
 
 - **macOS / Linux**: Supported natively
-- **Windows**: Works via Git Bash (bundled with Claude Code). Hooks execute in bash automatically. If using local skill symlinks (via `pmm:init-local-skills`), Developer Mode must be enabled in Windows Settings.
+- **Windows**: Works via Git Bash (bundled with Claude Code). Hooks execute in bash automatically. Local skills use auto install mode and fall back to copy when symlink creation is not available.
 - **Git**: 2.5+
 - **Claude Code**: Latest version with plugin support
 
 PMM installs as a plugin via `claude plugin install` — no symlinks needed for the core experience. All colon-namespaced skills (`pmm:save`, `pmm:query`, etc.) work on every platform without symlinks.
 
-**Cowork compatibility note**: The hyphenated local skill variants (`pmm-save`, `pmm-query`, etc.) are created by `pmm:init-local-skills` using symlinks. On Windows without Developer Mode enabled, symlink creation will fail and these local variants will not be available. The colon-namespaced plugin skills remain fully functional — the local variants are a Cowork-specific fallback, not the primary interface.
+**Cowork compatibility note**: The hyphenated local skill variants (`pmm-save`, `pmm-query`, etc.) are created by `pmm:init-local-skills` using auto install mode (symlink or copy fallback). The colon-namespaced plugin skills remain fully functional — the local variants are a Cowork-specific fallback, not the primary interface.
 
 ---
 
