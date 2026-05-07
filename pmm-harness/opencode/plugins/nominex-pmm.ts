@@ -1270,8 +1270,14 @@ ${systemTweaksInstructions}
           action: z.enum(["check", "apply"]).optional().describe("'check' (default) fetches and shows what would change. 'apply' applies the update — only call after user has confirmed from a prior check.")
         },
         execute: async (args, context: ToolContext) => {
-          const root = getRoot(context, pluginWorktree);
-          const gitRepoRoot = getGitTopLevel(root);
+          const invocationRoot = getRoot(context, pluginWorktree);
+          const directGitRoot = getGitTopLevel(invocationRoot);
+          const nestedHarnessCandidate = join(invocationRoot, "pmm-harness-dist");
+          const nestedHarnessGitRoot = existsSync(nestedHarnessCandidate)
+            ? getGitTopLevel(nestedHarnessCandidate)
+            : null;
+          const gitRepoRoot = directGitRoot || nestedHarnessGitRoot;
+          const projectRoot = gitRepoRoot || invocationRoot;
 
           if (!gitRepoRoot) {
             return JSON.stringify({
@@ -1280,12 +1286,12 @@ ${systemTweaksInstructions}
               instruction: {
                 type: "UPDATE",
                 action: args.action ?? "check",
-                projectRoot: root,
+                projectRoot,
                 gitRepoRoot: null,
-                localVersion: readLocalVersion(root),
-                localVersionPath: join(root, "pmm", "version.json"),
-                memoryInitialized: existsSync(resolvePmmMemoryDirPath(root)),
-                gitStatus: validateGit(root)
+                localVersion: readLocalVersion(projectRoot),
+                localVersionPath: join(projectRoot, "pmm", "version.json"),
+                memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
+                gitStatus: validateGit(projectRoot)
               }
             });
           }
@@ -1295,12 +1301,12 @@ ${systemTweaksInstructions}
             instruction: {
               type: "UPDATE",
               action: args.action ?? "check",
-              projectRoot: root,
+              projectRoot,
               gitRepoRoot,
-              localVersion: readLocalVersion(root),
-              localVersionPath: join(root, "pmm", "version.json"),
-              memoryInitialized: existsSync(resolvePmmMemoryDirPath(root)),
-              gitStatus: validateGit(root)
+              localVersion: readLocalVersion(projectRoot),
+              localVersionPath: join(projectRoot, "pmm", "version.json"),
+              memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
+              gitStatus: validateGit(projectRoot)
             }
           });
         }
