@@ -67,19 +67,6 @@ claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
 claude plugin reload
 ```
 
-Optional: enable Claude Cowork-friendly local skills:
-
-```text
-/pmm:init-local-skills
-```
-
-What this does:
-
-- Generates local flat command variants like `/pmm-recall`, `/pmm-save`, and `/pmm-status`.
-- Keeps the standard PMM slash commands (`/pmm:recall`, `/pmm:save`, etc.) available.
-- Extends PMM command ergonomics for Claude Cowork contexts where hyphen-form commands are preferred.
-- Can be rerun after plugin updates to refresh local skill variants.
-
 Scope options:
 
 - `project`: installed for the current repository only (recommended).
@@ -104,6 +91,19 @@ claude plugin install pmm@nominex-pmm-harness-marketplace --scope project
 claude plugin reload
 ```
 
+Optional: enable Claude Cowork-friendly local skills:
+
+```text
+/pmm:init-local-skills
+```
+
+What this does:
+
+- Generates local flat command variants like `/pmm-recall`, `/pmm-save`, and `/pmm-status`.
+- Keeps the standard PMM slash commands (`/pmm:recall`, `/pmm:save`, etc.) available.
+- Extends PMM command ergonomics for Claude Cowork contexts where hyphen-form commands are preferred.
+- Can be rerun after plugin updates to refresh local skill variants.
+
 ### 4) Update existing install
 
 When a new version is published, pull latest changes:
@@ -127,74 +127,26 @@ Run `/pmm:settings` (or `pmm_settings` in OpenCode Cowork) after any update that
 
 This is the fastest path from fresh install to useful memory.
 
-Command style used in this section:
+Use the exact runtime command forms below.
 
-- Runtime-agnostic notation uses a space form like `pmm save`.
-- Exact runtime forms are listed in the command mapping section below.
+| Step | Purpose | Claude Code CLI | OpenCode |
+| --- | --- | --- | --- |
+| 1 | Initialize PMM | `/pmm:init` | `pmm_init` |
+| 2 | Hydrate from existing project context | `/pmm:hydrate --all` | `pmm_hydrate` |
+| 3 | Save at milestones | `/pmm:save <optional notes>` | `pmm_save content:"<notes>"` |
+| 4 | Resume quickly | `/pmm:recall` or `/pmm:recall <topic>` | `pmm_recall topic:"<topic>"` |
+| 5 | Run targeted retrieval | `/pmm:query <question>` | `pmm_query question:"<question>"` |
+| 6 | Check health | `/pmm:status` | `pmm_status` |
+| 7 | Tune configuration | `/pmm:settings` | `pmm_settings` |
+| 8 | Update PMM system files | `/pmm:update` | `pmm_update` |
 
-### 1) Initialize PMM
+Notes:
 
-Run:
-
-`pmm init`
-
-What it does:
-
-- creates your `memory/` files
-- writes initial PMM config
-- sets up defaults for save/recall behavior
-
-### 2) Hydrate if this is not a brand-new project
-
-Run:
-
-`pmm hydrate --all`
-
-Use this when the project already has history. It bootstraps memory files from existing context so you are not starting with empty templates.
-
-### 3) Save at milestones
-
-Run whenever you make a meaningful decision, finish a chunk of work, or learn something important:
-
-`pmm save <optional notes>`
-
-Examples:
-
-- `pmm save chose postgres over sqlite for multitenancy`
-- `pmm save completed auth refactor and added token rotation`
-
-### 4) Use recall to resume quickly
-
-Run when you context-switch or start a new day:
-
-`pmm recall` and `pmm recall auth`
-
-Use `pmm recall` for a briefing and `pmm recall <topic>` for focused catch-up.
-
-### 5) Use query for specific retrieval
-
-Run when you need exact facts with filters:
-
-`pmm query why did we choose postgres?` and `pmm query auth changes since 2026-03-01 deep`
-
-Use query for searching; use recall for working-context briefings.
-
-### 6) Check health and tune behavior
-
-Run periodically:
-
-`pmm status` and `pmm settings`
-
-- `pmm status` shows file health, save freshness, and warnings
-- `pmm settings` lets you tune cadence, models, active files, and other defaults
-
-### 7) Keep plugin/system files current
-
-Run when you want latest PMM updates:
-
-`pmm update`
-
-This updates system/plugin assets while preserving your project memory files.
+- `pmm_hydrate` in OpenCode starts an interactive hydrate flow (strategy/scope prompts).
+- `pmm_save` in OpenCode requires `content`; use `context` optionally.
+- `pmm_recall` in OpenCode requires a `topic` argument; use `topic:"session resume"` for no-topic catch-up behavior.
+- `pmm_query` in OpenCode supports optional flags: `deep:true` and `dump:true`.
+- `pmm_update` in OpenCode defaults to check mode; set `action:"apply"` only after confirming changes.
 
 ### Skill quick reference
 
