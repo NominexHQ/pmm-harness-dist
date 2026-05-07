@@ -1,8 +1,8 @@
 SHELL := /bin/zsh
 
 PROJECT_ROOT := $(abspath ../..)
-SRC_OPENCODE := $(PROJECT_ROOT)/.opencode
-DST_OPENCODE := $(PROJECT_ROOT)/pmm-harness-dist/pmm-harness/opencode
+CANONICAL_OPENCODE := $(CURDIR)/opencode
+WORKSPACE_OPENCODE := $(PROJECT_ROOT)/.opencode
 
 # Shipping allowlist: only files required to distribute the OpenCode PMM plugin.
 DIST_ROOT_FILES := package.json opencode.json
@@ -13,18 +13,20 @@ DIST_PLUGIN_DIRS := plugins/instructions plugins/pmm
 # No upstream clone — edit directly.
 
 .PHONY: help \
-	build-harness build-opencode build-claudecode build-opencode-bash clean-opencode show-opencode-files
+	build-harness build-opencode build-claudecode build-opencode-bash clean-opencode show-opencode-files sync-opencode-to-workspace
 
 help:
 	@echo "Targets:"
-	@echo "  make build-harness       Build both OpenCode and Claude harness artifacts"
-	@echo "  make build-opencode      Copy shipping artifacts into pmm-harness-dist/pmm-harness/opencode"
+	@echo "  make build-harness       Build Claude local variants; OpenCode is canonical in-place"
+	@echo "  make build-opencode      No-op (OpenCode source is canonical at pmm-harness/opencode)"
 	@echo "  make build-claudecode    Generate local Claude skill variants in pmm-plugin/local"
 	@echo "  make build-opencode-bash Same as build-opencode, but forces /bin/bash as the shell"
-	@echo "  make clean-opencode      Remove generated harness files from pmm-harness-dist/pmm-harness/opencode"
-	@echo "  make show-opencode-files Show source files that are included in the OpenCode harness build"
+	@echo "  make sync-opencode-to-workspace  Copy shipping OpenCode files into .opencode for local runtime testing"
+	@echo "  make clean-opencode      No-op (OpenCode files are source-controlled in-place)"
+	@echo "  make show-opencode-files Show canonical OpenCode shipping files"
 	@echo ""
 	@echo "  Claude Code plugin (claudecode/pmm-plugin/) is canonical — edit directly."
+	@echo "  OpenCode harness (opencode/) is canonical — edit directly."
 
 build-harness: build-opencode build-claudecode
 
@@ -32,32 +34,34 @@ build-claudecode:
 	@$(MAKE) -C "$(CURDIR)/claudecode/pmm-plugin" local
 
 clean-opencode:
-	@mkdir -p "$(DST_OPENCODE)"
-	@find "$(DST_OPENCODE)" -mindepth 1 -maxdepth 1 ! -name '.DS_Store' -exec rm -rf {} +
+	@echo "clean-opencode: no-op (canonical OpenCode files live in pmm-harness/opencode)."
 
-build-opencode: clean-opencode
-	@mkdir -p "$(DST_OPENCODE)"
+build-opencode:
+	@echo "build-opencode: no-op (OpenCode source is canonical at pmm-harness/opencode)."
+
+sync-opencode-to-workspace:
+	@mkdir -p "$(WORKSPACE_OPENCODE)"
 	@for file in $(DIST_ROOT_FILES); do \
-		mkdir -p "$(DST_OPENCODE)/$$(dirname "$$file")"; \
-		cp "$(SRC_OPENCODE)/$$file" "$(DST_OPENCODE)/$$file"; \
+		mkdir -p "$(WORKSPACE_OPENCODE)/$$(dirname "$$file")"; \
+		cp "$(CANONICAL_OPENCODE)/$$file" "$(WORKSPACE_OPENCODE)/$$file"; \
 	done
 	@for file in $(DIST_PLUGIN_FILES); do \
-		mkdir -p "$(DST_OPENCODE)/$$(dirname "$$file")"; \
-		cp "$(SRC_OPENCODE)/$$file" "$(DST_OPENCODE)/$$file"; \
+		mkdir -p "$(WORKSPACE_OPENCODE)/$$(dirname "$$file")"; \
+		cp "$(CANONICAL_OPENCODE)/$$file" "$(WORKSPACE_OPENCODE)/$$file"; \
 	done
 	@for dir in $(DIST_PLUGIN_DIRS); do \
-		mkdir -p "$(DST_OPENCODE)/$$dir"; \
-		cp -R "$(SRC_OPENCODE)/$$dir"/. "$(DST_OPENCODE)/$$dir/"; \
+		mkdir -p "$(WORKSPACE_OPENCODE)/$$dir"; \
+		cp -R "$(CANONICAL_OPENCODE)/$$dir"/. "$(WORKSPACE_OPENCODE)/$$dir/"; \
 	done
-	@find "$(DST_OPENCODE)" -name '.DS_Store' -delete
+	@find "$(WORKSPACE_OPENCODE)" -name '.DS_Store' -delete
 
 build-opencode-bash:
 	@$(MAKE) SHELL=/bin/bash build-opencode
 
 show-opencode-files:
 	@echo "Root files:"
-	@for file in $(DIST_ROOT_FILES); do echo "  .opencode/$$file"; done
+	@for file in $(DIST_ROOT_FILES); do echo "  pmm-harness/opencode/$$file"; done
 	@echo "Plugin files:"
-	@for file in $(DIST_PLUGIN_FILES); do echo "  .opencode/$$file"; done
+	@for file in $(DIST_PLUGIN_FILES); do echo "  pmm-harness/opencode/$$file"; done
 	@echo "Plugin directories:"
-	@for dir in $(DIST_PLUGIN_DIRS); do echo "  .opencode/$$dir/**"; done
+	@for dir in $(DIST_PLUGIN_DIRS); do echo "  pmm-harness/opencode/$$dir/**"; done
