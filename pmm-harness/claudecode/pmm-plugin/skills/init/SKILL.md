@@ -1,7 +1,7 @@
 ---
 name: pmm:init
 description: Initialize Poor Man's Memory in your project — runs preference wizard, scaffolds memory/ directory, configures hooks.
-argument-hint: [project-name]
+argument-hint: [lite|balanced|power]
 ---
 
 # pmm:init
@@ -20,13 +20,65 @@ Initialize Poor Man's Memory in the current project. Runs the preference wizard,
 
 Read the current directory. If `memory/config.md` exists, PMM is already initialised. Tell the user:
 
-> PMM is already initialised in this project. Run `pmm:settings` to change configuration.
+> PMM is already initialised in this project. Run `/pmm:settings` to change preferences.
 
 Stop. Do not overwrite existing memory files.
 
 ---
 
-## Step 2 — Preference wizard
+## Step 2 — Profile mode (optional)
+
+Parse `$ARGUMENTS`.
+
+Supported profile templates:
+
+- `lite`
+- `balanced`
+- `power`
+
+If `$ARGUMENTS` is one of the profiles above:
+
+1. Create `memory/` if missing.
+2. Copy profile config template into `memory/config.md`:
+
+   - `lite` → `<plugin-root>/references/profiles/config.lite.md`
+   - `balanced` → `<plugin-root>/references/profiles/config.balanced.md`
+   - `power` → `<plugin-root>/references/profiles/config.power.md`
+
+   (`<plugin-root>` is the plugin root path resolved from this skill location.)
+
+3. Skip the preference wizard and skip the manual config generation step.
+4. Continue to Step 4 (scaffold memory files).
+
+If `$ARGUMENTS` is empty, prompt with `AskUserQuestion` and present these options:
+
+- `lite` — smallest context and model footprint
+- `balanced` — daily-use default
+- `power` — full pre-set profile
+- `power-user-wizard` — interactive full configuration flow
+
+After asking, store the result in `INIT_PROFILE` and continue this flow in the same invocation.
+
+Normalization rules for `INIT_PROFILE`:
+
+- Accept `lite`, `balanced`, `power`, `power-user-wizard` exactly.
+- Also accept case-insensitive variants (`Lite`, `Balanced`, `Power`, `Power User Wizard`) and normalize to lowercase canonical values above.
+
+If `INIT_PROFILE` is `lite`, `balanced`, or `power`, apply the matching profile template as above and continue to Step 4.
+
+If `INIT_PROFILE` is `power-user-wizard`, continue to Step 3.
+
+Do NOT stop after the question step. The init flow must proceed to either profile template application (then Step 4) or wizard mode (Step 3) in the same run.
+
+If `$ARGUMENTS` is present but not one of `lite|balanced|power`, stop and show:
+
+> Unknown init profile: `<value>`
+> Use one of: `lite`, `balanced`, `power`
+> Or run `pmm:init` with no args to choose interactively.
+
+---
+
+## Step 3 — Preference wizard (power mode)
 
 Present these questions interactively before creating any files. Use the `AskUserQuestion` tool with multiple-choice options where specified.
 
@@ -60,9 +112,9 @@ Options:
 **Q4: Sliding window size** — How many entries to load at session start for timeline.md and summaries.md:
 
 Options:
-- `light` — 30 timeline / 5 summaries
-- `moderate` (default) — 50 timeline / 10 summaries
-- `heavy` — 100 timeline / 20 summaries
+- `light` — 20 timeline / 5 summaries
+- `moderate` (default) — 30 timeline / 10 summaries
+- `heavy` — 50 timeline / 20 summaries
 - `unlimited` — load full file at session start
 
 *Files are never truncated on disk. The window controls session-start injection only. Git is the full audit trail.*
@@ -133,7 +185,7 @@ Options:
 
 ---
 
-## Step 3 — Write config.md
+## Step 3.1 — Write config.md (power mode)
 
 Write `memory/config.md` using the user's answers. Use this exact format:
 
@@ -157,7 +209,7 @@ Run `pmm:settings` at any time to change these.
 
 ## Sliding Window Size
 
-- Timeline max: <from Q4: light=30, moderate=50, heavy=100, unlimited=9999>
+- Timeline max: <from Q4: light=20, moderate=30, heavy=50, unlimited=9999>
 - Summaries max: <from Q4: light=5, moderate=10, heavy=20, unlimited=9999>
 
 ## Verbosity
@@ -246,8 +298,11 @@ Dispatch a `general-purpose` agent using the `Readonly Agent Model` from config 
 > 3. `memory/config.md` is already written — skip it.
 > 4. Ensure `memory/BOOTSTRAP.md` exists. If missing, create it with the standard PMM bootstrap guidance (tier behavior, routing table, and save protocol).
 > 5. For each file marked `active` in config.md, ensure the file exists. If missing, create a minimal scaffold with a top-level heading and sensible section placeholders for that file type.
-> 6. Always create `memory/secrets.md` if missing with local-only handling notes and a simple keys table. It is always gitignored regardless of active file list.
-> 7. Return a confirmation listing: files created, files skipped (inactive), and any errors.
+>    - Parse active entries only from lines matching `- <filename>.md: active`.
+>    - Do not ignore `threads-open.md` or `threads-closed.md` when active.
+> 6. Always ensure `memory/threads-open.md` and `memory/threads-closed.md` exist. If either is missing, create it even if active-file parsing fails.
+> 7. Always create `memory/secrets.md` if missing with local-only handling notes and a simple keys table. It is always gitignored regardless of active file list.
+> 8. Return a confirmation listing: files created, files skipped (inactive), and any errors.
 
 Wait for the agent to return before proceeding.
 
