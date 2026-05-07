@@ -195,8 +195,44 @@ This matrix is the source of truth for runtime parity status.
 
 ### Claude-only extras
 
-- `pmm:onboard` — Seeds `user.md` from user identity intake.
+- `pmm:onboard` — Seeds `user.md` from user identity intake (see onboarding guide below).
 - `pmm:init-local-skills` — Generates local hyphen-form aliases (for example `/pmm-recall`) for Claude Cowork compatibility.
+
+## User Identity Onboarding (`/pmm:onboard`)
+
+`/pmm:onboard` is the identity intake flow for Claude Code. It builds a durable user profile so PMM can adapt how it communicates and reasons in future sessions.
+
+What it writes:
+
+- `memory/user.md` — operative identity (decision style, communication preferences, working patterns). Safe to commit.
+- `memory/secrets.md` — PII and sensitive personal details. Local-only and gitignored.
+
+When to run it:
+
+- After `pmm:init`, once per project/user setup.
+- When migrating from another AI that already knows your preferences.
+- When your working style changes and you want to refresh identity data.
+
+Step-by-step:
+
+1. Start with `/pmm:onboard` (default `extract` mode).
+2. Copy the extraction prompt it gives you into your old AI (ChatGPT/Gemini/Copilot).
+3. Paste that AI's response back into Claude.
+4. PMM maps actionable behavior to `memory/user.md` and routes PII to `memory/secrets.md`.
+5. Review the proposed output and confirm.
+6. PMM commits `memory/user.md` (and keeps `memory/secrets.md` local-only).
+
+Modes:
+
+- `/pmm:onboard` or `/pmm:onboard extract` — import from a prior AI summary.
+- `/pmm:onboard interview` — direct questionnaire if no prior AI context exists.
+- `/pmm:onboard refresh` — re-run and update an existing `memory/user.md`.
+
+Practical tips:
+
+- Keep `memory/user.md` behavioral, not biographical; if it would feel risky on GitHub, it belongs in `memory/secrets.md`.
+- Re-run `refresh` after major role/process changes.
+- In org deployments, onboarding may be restricted to a designated intake agent.
 
 ## Memory files
 
