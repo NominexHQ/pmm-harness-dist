@@ -152,6 +152,7 @@ Use `AskUserQuestion` to present the same questions from Phase 1 of the main ski
 
 Read the current `## Active Files` section from `memory/config.md` and display each active Tier 1 file with its current strategy (or `full` if none set). For each file the user wants to change, accept a new strategy:
 - `full` (default) — load the entire file
+- `head:N` — load only the first N entries
 - `tail:N` — load only the last N lines/entries (recommended for `timeline.md`, `decisions.md`, `lessons.md`)
 - `header` — load only the file header
 - `skip` — exclude from session-start injection (file remains active for maintain; use `pmm-recall` to load on demand)

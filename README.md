@@ -2,8 +2,9 @@
 
 ## Poor Man's Memory
 
-[![Release](https://img.shields.io/github/v/release/NominexHQ/pmm-harness-dist)](https://github.com/NominexHQ/pmm-harness-dist/releases)
-[![License](https://img.shields.io/github/license/NominexHQ/pmm-harness-dist)](https://github.com/NominexHQ/pmm-harness-dist/blob/main/LICENSE.md)
+[![Marketplace Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNominexHQ%2Fpmm-harness-dist%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.version&label=marketplace)](https://github.com/NominexHQ/pmm-harness-dist/blob/main/.claude-plugin/marketplace.json)
+[![PMM Plugin Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FNominexHQ%2Fpmm-harness-dist%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.plugins%5B0%5D.version&label=pmm%20plugin)](https://github.com/NominexHQ/pmm-harness-dist/blob/main/.claude-plugin/marketplace.json)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](https://github.com/NominexHQ/pmm-harness-dist/blob/main/LICENSE.md)
 [![Last Commit](https://img.shields.io/github/last-commit/NominexHQ/pmm-harness-dist)](https://github.com/NominexHQ/pmm-harness-dist/commits/main)
 [![Stars](https://img.shields.io/github/stars/NominexHQ/pmm-harness-dist?style=social)](https://github.com/NominexHQ/pmm-harness-dist/stargazers)
 
