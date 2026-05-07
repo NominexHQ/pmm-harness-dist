@@ -1120,7 +1120,9 @@ ${systemTweaksInstructions}
             instruction: {
               type: 'RECALL',
               topic: args.topic,
-              activeFiles
+              memoryDir,
+              activeFiles,
+              activeFilePaths: activeFiles.map((file) => join(memoryDir, file))
             }
           });
         }
@@ -1159,7 +1161,9 @@ ${systemTweaksInstructions}
               question: args.question,
               deep: args.deep ?? false,
               dump: args.dump ?? false,
-              activeFiles
+              memoryDir,
+              activeFiles,
+              activeFilePaths: activeFiles.map((file) => join(memoryDir, file))
             }
           });
         }

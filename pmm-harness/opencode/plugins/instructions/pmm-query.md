@@ -4,6 +4,9 @@
 
 When you receive a QUERY instruction from `pmm_query`, you MUST:
 
+- Use `instruction.activeFilePaths` when provided and treat those as the canonical files to search/read.
+- If `instruction.activeFilePaths` is missing, resolve each file as `memory/<file>.md`.
+
 1. **Search active files first** - Search across the provided `activeFiles` from config.
 2. **Prioritize high-signal files**:
    - Start with memory already in the current context window.

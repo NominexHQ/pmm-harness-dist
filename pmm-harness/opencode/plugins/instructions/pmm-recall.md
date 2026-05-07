@@ -4,6 +4,9 @@
 
 When you receive a RECALL instruction from 'pmm_recall', you MUST:
 
+- Use `instruction.activeFilePaths` when provided and treat those as the canonical files to read.
+- If `instruction.activeFilePaths` is missing, resolve each file as `memory/<file>.md`.
+
 1. **Search across active files** - Search all active Tier 1 files for entries related to the topic.
 2. **Tier 1 Files to check**:
    - `timeline.md`: Recent activity
