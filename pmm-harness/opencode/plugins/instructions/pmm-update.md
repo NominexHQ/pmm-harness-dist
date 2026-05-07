@@ -2,7 +2,7 @@
 
 **Path scope:** Treat `memory/` as `<project-root>/memory/`. Any `memory/<file>.md` path means `<project-root>/memory/<file>.md`.
 
-Check the deployed PMM harness repository for updates and apply them safely. The canonical source is the installed `pmm-harness-dist` git clone itself and its configured remote. System files are updated; user memory content is never touched.
+Check for PMM updates by comparing the local OpenCode install against a fresh upstream fetch in a temporary git directory. System files are updated; user memory content is never touched.
 
 Update contract (OpenCode):
 1. Compare installed version from `.opencode/plugins/pmm/version.json` to upstream.
@@ -10,7 +10,7 @@ Update contract (OpenCode):
 3. Apply system diffs.
 4. Run semantic updates for `config/` and `memory/`.
 
-> **Canonical source rule:** In end-user deployment, `pmm-harness-dist/` is the product and its git remote is the upstream source of truth. Do not clone `poor-man-memory` or any other external repo to perform update checks. Use the git repository that contains the deployed harness directory.
+> **Canonical source rule:** Use the official PMM harness upstream (`instruction.upstreamRepoUrl`) fetched into a temporary directory for every check/apply cycle. Do not depend on a pre-existing local `pmm-harness-dist` clone.
 
 When you receive an UPDATE instruction from `pmm_update`, route on `instruction.action`:
 
@@ -22,47 +22,33 @@ When you receive an UPDATE instruction from `pmm_update`, route on `instruction.
 Always runs regardless of action. Inputs available from the tool payload:
 
 - `instruction.projectRoot`
-- `instruction.gitRepoRoot`
+- `instruction.gitRepoRoot` (optional local context only; not required for update source)
 - `instruction.localVersion`
 - `instruction.localVersionPath`
 - `instruction.localOpencodeDir`
-- `instruction.upstreamOpencodeDir`
+- `instruction.upstreamOpencodeDir` (relative path inside upstream checkout)
+- `instruction.upstreamRepoUrl`
 - `instruction.configDir`
 - `instruction.memoryDir`
 
-First resolve the canonical repository root.
-
-- Use `instruction.gitRepoRoot` when present.
-- This should be the directory that contains the `.git` metadata for the deployed `pmm-harness-dist` clone.
-- If no git repo is available, return exactly:
-
-```text
-ERROR: PMM update requires a git clone of pmm-harness-dist with a configured remote.
-```
-
-Fetch the configured upstream from the canonical repo:
+Create a temporary upstream checkout and fetch latest:
 
 ```bash
-git -C "{instruction.gitRepoRoot}" fetch --prune
+tmpdir=$(mktemp -d)
+git clone --depth 1 "{instruction.upstreamRepoUrl}" "$tmpdir"
 ```
 
-If fetch fails, return exactly:
+If clone/fetch fails, return exactly:
 
 ```text
-ERROR: Could not fetch updates from the pmm-harness-dist remote. Check the repository remote and your network connection.
+ERROR: Could not fetch updates from the PMM harness upstream. Check your network connection.
 ```
 
-Determine the upstream tracking ref for the current branch.
+Read upstream version from:
 
-- Prefer `@{upstream}` when configured.
-- Otherwise fall back to `origin/main`.
-- If neither exists, return exactly:
+`$tmpdir/pmm-harness/opencode/plugins/pmm/version.json`
 
-```text
-ERROR: Could not determine an upstream tracking branch for pmm-harness-dist.
-```
-
-Read `.opencode/plugins/pmm/version.json` from the fetched upstream ref under `pmm-harness/opencode/plugins/pmm/version.json` and compare to `instruction.localVersion`.
+and compare to `instruction.localVersion`.
 
 **If `instruction.action === "check"`:**
 
@@ -75,7 +61,7 @@ PMM is up to date (v{version})
 Otherwise build the full change report by diffing OpenCode system trees:
 
 - local tree: `instruction.localOpencodeDir`
-- upstream tree: `instruction.upstreamOpencodeDir`
+- upstream tree: `$tmpdir/{instruction.upstreamOpencodeDir}`
 
 - local exists and differs: `M`
 - missing locally: `A`
@@ -133,11 +119,11 @@ If the user answers `show diffs`, show unified diffs for changed files using `gi
 
 ## Phase 3 — Apply updates (apply only)
 
-Dispatch a write-capable subagent. It must not run git commands.
+Dispatch a write-capable subagent. It may read from the temp upstream checkout and write local files.
 
 Provide it:
 
-- upstream ref
+- temp upstream checkout path
 - project root
 - overwrite list (`M` and `A` files)
 - delete list (`D` files)
@@ -158,7 +144,7 @@ Never touch:
 
 The subagent should:
 
-1. read added or modified files from the fetched upstream ref and overwrite local system files
+1. read added or modified files from the temp upstream checkout and overwrite local system files
 1. delete removed system files and prune empty parent directories where safe
 1. apply additive merges for merge files
 1. return a concise action summary
@@ -187,4 +173,4 @@ git commit -m "pmm: update to v{new_version}"
 - Merge, do not replace, managed files and settings files.
 - Pre-version installs are valid: missing `.opencode/plugins/pmm/version.json` means `0.0.0` and full sync can be offered.
 - File moves and renames should appear as delete + add via `files.system`.
-- The canonical update source is the fetched remote state of the deployed `pmm-harness-dist` clone, not a separate upstream checkout.
+- The canonical update source is a fresh temporary checkout of `instruction.upstreamRepoUrl` for each run.

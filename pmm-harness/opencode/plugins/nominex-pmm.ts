@@ -1270,40 +1270,13 @@ ${systemTweaksInstructions}
           action: z.enum(["check", "apply"]).optional().describe("'check' (default) fetches and shows what would change. 'apply' applies the update — only call after user has confirmed from a prior check.")
         },
         execute: async (args, context: ToolContext) => {
-          const invocationRoot = getRoot(context, pluginWorktree);
-          const directGitRoot = getGitTopLevel(invocationRoot);
-          const nestedHarnessCandidate = join(invocationRoot, "pmm-harness-dist");
-          const nestedHarnessGitRoot = existsSync(nestedHarnessCandidate)
-            ? getGitTopLevel(nestedHarnessCandidate)
-            : null;
-          const gitRepoRoot = directGitRoot || nestedHarnessGitRoot;
-          const projectRoot = invocationRoot;
+          const projectRoot = getRoot(context, pluginWorktree);
+          const gitRepoRoot = getGitTopLevel(projectRoot);
           const localOpencodeDir = join(projectRoot, ".opencode");
-          const upstreamOpencodeDir = join(gitRepoRoot || "", "pmm-harness", "opencode");
+          const upstreamOpencodeDir = "pmm-harness/opencode";
           const configDir = join(projectRoot, "config");
           const memoryDir = resolvePmmMemoryDirPath(projectRoot);
           const localVersionPath = join(projectRoot, ".opencode", "plugins", "pmm", "version.json");
-
-          if (!gitRepoRoot) {
-            return JSON.stringify({
-              status: "ERROR",
-              message: "ERROR: PMM update requires a git clone of pmm-harness-dist with a configured remote.",
-              instruction: {
-                type: "UPDATE",
-                action: args.action ?? "check",
-                projectRoot,
-                gitRepoRoot: null,
-                localVersion: readLocalVersion(projectRoot),
-                localVersionPath,
-                localOpencodeDir,
-                upstreamOpencodeDir: null,
-                configDir,
-                memoryDir,
-                memoryInitialized: existsSync(memoryDir),
-                gitStatus: validateGit(projectRoot)
-              }
-            });
-          }
 
           return JSON.stringify({
             status: "INSTRUCTION_READY",
@@ -1316,6 +1289,7 @@ ${systemTweaksInstructions}
               localVersionPath,
               localOpencodeDir,
               upstreamOpencodeDir,
+              upstreamRepoUrl: "https://github.com/NominexHQ/pmm-harness-dist.git",
               configDir,
               memoryDir,
               memoryInitialized: existsSync(memoryDir),
