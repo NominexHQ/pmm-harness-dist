@@ -145,6 +145,14 @@ For OpenCode users, restart OpenCode after pulling updates.
 
 Run `/pmm:settings` (or `pmm_settings` in OpenCode Cowork) after any update that adds new memory file types — it will prompt you to activate constructs like `threads-open.md` and `threads-closed.md`.
 
+## Quick Start
+
+1. Install PMM.
+2. Initialize memory profile with `/pmm:init` and choose `lite`, `balanced`, or `power`.
+3. Hydrate memory with `/pmm:hydrate` (recommended for existing projects).
+4. Save at milestones with `/pmm:save`.
+5. Resume instantly with `/pmm:recall` (or `/pmm:recall <topic>`).
+
 ## First-time user primer
 
 This is the fastest path from fresh install to useful memory.
