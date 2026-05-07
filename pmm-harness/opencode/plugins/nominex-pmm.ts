@@ -244,17 +244,19 @@ function parseActiveFiles(configContent: string): string[] {
     }
     
     if (inActiveSection) {
-      // Matches: - file.md, - `file.md`, - file.md: active
-      const match = line.match(/^\s*-\s*(`?)([\w\-.]+\.md)\1/);
+      // Matches active entries only, e.g.:
+      // - file.md: active
+      // - `file.md`: active | tail:5
+      const match = line.match(/^\s*-\s*`?([\w\-.]+\.md)`?\s*:\s*active\b/i);
       if (match) {
-        activeFiles.push(match[2]);
+        activeFiles.push(match[1]);
       }
     }
   }
   
   // Fallback if section based parsing failed
   if (activeFiles.length === 0) {
-     const matches = Array.from(configContent.matchAll(/-\s*`?([\w\-.]+\.md)`?/g));
+     const matches = Array.from(configContent.matchAll(/-\s*`?([\w\-.]+\.md)`?\s*:\s*active\b/gi));
      for (const match of matches) {
        activeFiles.push(match[1]);
      }
@@ -327,6 +329,8 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
     "vectors.md",
     "taxonomies.md",
     "standinginstructions.md",
+    "threads-open.md",
+    "threads-closed.md",
     "last-parallel.md",
     "timeline-parallel.md"
   ];
