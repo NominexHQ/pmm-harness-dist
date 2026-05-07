@@ -146,12 +146,17 @@ Open generated cache file by platform:
 
 - macOS: `open`
 - Linux: `xdg-open`
+- Windows (Git Bash / native): `cmd.exe /c start "" "<absolute-path>"`
 - WSL: `wslview` (or `cmd.exe /c start` fallback)
+
+If auto-open fails, still return the absolute output path so the user can open it manually.
 
 Return a concise summary:
 
 ```text
-Generated PMM graph: X nodes, Y edges, Z commits in timeline. Opened in browser.
+Generated PMM graph: X nodes, Y edges, Z commits in timeline.
+Opened in browser: {instruction.cachePath}
+If it did not open automatically, open this file manually: {instruction.cachePath}
 ```
 
 ## Guardrails
