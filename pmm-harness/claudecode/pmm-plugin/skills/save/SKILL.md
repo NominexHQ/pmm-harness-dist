@@ -39,6 +39,7 @@ Before dispatching any agent, assess whether this session had meaningful activit
 - No new facts, entities, or processes were established
 - No preferences or lessons observed
 - No milestones reached or blockers hit
+- No thread lifecycle activity (no threads opened, task status changes, or thread closures)
 - The conversation was purely read-only (recall queries, status checks)
 
 **If skipping:** Output a single line (if verbosity ≠ `silent`): `pmm:save — nothing to save` and stop.
@@ -46,6 +47,8 @@ Before dispatching any agent, assess whether this session had meaningful activit
 **If not skipping:** Continue to Step 3.
 
 When in doubt, do not skip. A false negative (missed save) is worse than a no-op haiku dispatch.
+
+Thread guard: if `threads-open.md` is active, read it before finalizing skip/no-skip. If thread state is uncertain, do not skip.
 
 ---
 
@@ -126,6 +129,8 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > - `lessons.md` — append-only
 > - `threads-open.md` — living document; **read it every save** to check for task status changes even if not mentioned explicitly in `<what-changed>`; update task status in place; on thread close: append full detail to threads-closed.md first, then replace open entry with closure line
 > - `threads-closed.md` — append-only; never modify past entries
+> - Thread routing invariant: active/live thread detail belongs only in `threads-open.md`; completed/archive detail belongs only in `threads-closed.md`
+> - Thread no-skip invariant: do not omit thread sync just because `<what-changed>` lacks explicit thread notes
 >
 > **Decay scoring (if `## Decay (Advanced)` is uncommented in config.md):**
 >

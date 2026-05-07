@@ -782,6 +782,8 @@ Format: observation → instruction. -->
 Active issues, projects, and tasks. Updated as conversations progress.
 When a thread completes, move its full detail to threads-closed.md and replace with a one-line summary + reference here.
 
+Invariant: this file is the only place for active/live thread detail.
+
 <!-- Format:
 ## [Thread title]
 *Status: open | in-progress | blocked*
@@ -857,6 +859,8 @@ When closed: replace all of the above with:
 
 Archive of completed issues and projects. Append-only — never modify past entries.
 Newest at top.
+
+Invariant: this file is the only place for completed/archive thread detail.
 
 <!-- Format:
 ## [Thread title]
