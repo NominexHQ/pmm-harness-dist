@@ -1273,13 +1273,30 @@ ${systemTweaksInstructions}
           const root = getRoot(context, pluginWorktree);
           const gitRepoRoot = getGitTopLevel(root);
 
+          if (!gitRepoRoot) {
+            return JSON.stringify({
+              status: "ERROR",
+              message: "ERROR: PMM update requires a git clone of pmm-harness-dist with a configured remote.",
+              instruction: {
+                type: "UPDATE",
+                action: args.action ?? "check",
+                projectRoot: root,
+                gitRepoRoot: null,
+                localVersion: readLocalVersion(root),
+                localVersionPath: join(root, "pmm", "version.json"),
+                memoryInitialized: existsSync(resolvePmmMemoryDirPath(root)),
+                gitStatus: validateGit(root)
+              }
+            });
+          }
+
           return JSON.stringify({
             status: "INSTRUCTION_READY",
             instruction: {
               type: "UPDATE",
               action: args.action ?? "check",
               projectRoot: root,
-              gitRepoRoot: gitRepoRoot || root,
+              gitRepoRoot,
               localVersion: readLocalVersion(root),
               localVersionPath: join(root, "pmm", "version.json"),
               memoryInitialized: existsSync(resolvePmmMemoryDirPath(root)),
