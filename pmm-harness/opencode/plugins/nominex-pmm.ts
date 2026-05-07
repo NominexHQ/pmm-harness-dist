@@ -352,15 +352,26 @@ function parseSettingsSummary(configContent: string): SettingsSummary {
 }
 
 function readLocalVersion(root: string): string {
-  const versionPath = join(root, "pmm", "version.json");
+  const marketplacePath = join(root, ".claude-plugin", "marketplace.json");
 
-  if (!existsSync(versionPath)) {
+  if (!existsSync(marketplacePath)) {
     return "0.0.0";
   }
 
   try {
-    const parsed = JSON.parse(readFileSync(versionPath, "utf-8"));
-    return typeof parsed?.version === "string" ? parsed.version : "0.0.0";
+    const parsed = JSON.parse(readFileSync(marketplacePath, "utf-8"));
+    if (typeof parsed?.version === "string") {
+      return parsed.version;
+    }
+
+    const plugins = Array.isArray(parsed?.plugins) ? parsed.plugins : [];
+    const pmmEntry = plugins.find((plugin: unknown) => {
+      if (!plugin || typeof plugin !== "object") return false;
+      const name = (plugin as { name?: unknown }).name;
+      return typeof name === "string" && name === "pmm";
+    }) as { version?: unknown } | undefined;
+
+    return typeof pmmEntry?.version === "string" ? pmmEntry.version : "0.0.0";
   } catch {
     return "0.0.0";
   }
@@ -1289,7 +1300,7 @@ ${systemTweaksInstructions}
                 projectRoot,
                 gitRepoRoot: null,
                 localVersion: readLocalVersion(projectRoot),
-                localVersionPath: join(projectRoot, "pmm", "version.json"),
+                localVersionPath: join(projectRoot, ".claude-plugin", "marketplace.json"),
                 memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
                 gitStatus: validateGit(projectRoot)
               }
@@ -1304,7 +1315,7 @@ ${systemTweaksInstructions}
               projectRoot,
               gitRepoRoot,
               localVersion: readLocalVersion(projectRoot),
-              localVersionPath: join(projectRoot, "pmm", "version.json"),
+              localVersionPath: join(projectRoot, ".claude-plugin", "marketplace.json"),
               memoryInitialized: existsSync(resolvePmmMemoryDirPath(projectRoot)),
               gitStatus: validateGit(projectRoot)
             }
