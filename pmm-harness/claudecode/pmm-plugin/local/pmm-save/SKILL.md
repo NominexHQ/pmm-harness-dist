@@ -133,6 +133,11 @@ Dispatch one agent for all active files. Minimal overhead — correct for most i
 > - `threads-closed.md` — append-only; never modify past entries
 > - Thread routing invariant: active/live thread detail belongs only in `threads-open.md`; completed/archive detail belongs only in `threads-closed.md`
 > - Thread no-skip invariant: do not omit thread sync just because `<what-changed>` lacks explicit thread notes
+> - Supersede metadata is explicit across memory files. Use lifecycle metadata comments where entries are created or updated:
+>   `<!-- pmm-meta: id=<id> status=<active|superseded|redacted> supersedes=<id|none> superseded_by=<id|none> ts=<ISO8601> -->`
+> - If new information replaces earlier information, do NOT silently overwrite history. Mark prior entry `status=superseded` and set `superseded_by=<new-id>`, then write the new entry with `status=active` and `supersedes=<old-id>`.
+> - If sensitive content must be removed from memory text, mark entry `status=redacted` and replace sensitive value with `[REDACTED:<type>]` while preserving non-sensitive context.
+> - Default retrieval stance for maintenance summaries: treat `status=active` as current truth; use superseded entries only for historical context.
 >
 > **Decay scoring (if `## Decay (Advanced)` is uncommented in config.md):**
 >

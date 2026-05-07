@@ -2,6 +2,21 @@
 
 Initial content for each file in the poor-man-memory system.
 
+## Lifecycle Metadata (applies across memory files)
+
+Use explicit lifecycle metadata comments for entries that can be superseded or redacted:
+
+```markdown
+<!-- pmm-meta: id=<id> status=<active|superseded|redacted> supersedes=<id|none> superseded_by=<id|none> ts=<ISO8601> -->
+```
+
+Rules:
+- New canonical entry: `status=active`
+- Replaced entry: prior entry becomes `status=superseded` and points to the replacement via `superseded_by`
+- Replacement entry: `status=active` with `supersedes=<prior-id>`
+- Redaction: `status=redacted`, sensitive value replaced with `[REDACTED:<type>]`
+- Retrieval default: treat `status=active` entries as current truth; include superseded/redacted only for historical context
+
 ---
 
 ## config.md
@@ -397,6 +412,7 @@ Each entry is ratified and should be treated as ground truth unless explicitly r
 
 **[Date] — [Decision]** [namespace:name?]
 <!-- attribution: [user:name], [agent:name], or [system:process] — who originated this. Optional. -->
+<!-- pmm-meta: id=DEC-YYYYMMDD-01 status=active supersedes=none superseded_by=none ts=YYYY-MM-DDTHH:MM:SSZ -->
 Context: why this was decided
 Ratified by: [user / consensus / default]
 
@@ -499,6 +515,7 @@ Reference before making decisions in areas where past mistakes occurred.
 
 **[Date] — [Lesson]** [namespace:name?]
 <!-- attribution: [user:name], [agent:name], or [system:process] — who originated this. Optional. -->
+<!-- pmm-meta: id=LES-YYYYMMDD-01 status=active supersedes=none superseded_by=none ts=YYYY-MM-DDTHH:MM:SSZ -->
 What happened:
 What to do instead:
 
